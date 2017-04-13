@@ -86,15 +86,8 @@ def maybe_preprocess(train=True, ratio=None):
         images = read_images(paths)
     else:
         before_save(paths[0])
-        raw_train_paths = [RAW_TRAIN_DIR + i for i in dirs]
-        images = preprocess_images(raw_train_paths)
-        # if train:
-        #     cats = [images[i] for i, label in enumerate(labels) if label is 0]
-        #     cat_paths = [os.path.join(target_dir, '../cat/') + dirs[i] for i, label in enumerate(labels) if label is 0]
-        #     dogs = [images[i] for i, label in enumerate(labels) if label is 1]
-        #     dog_paths = [os.path.join(target_dir, '../dog/') + dirs[i] for i, label in enumerate(labels) if label is 1]
-        #     write_images(cats, cat_paths)
-        #     write_images(dogs, dog_paths)
+        raw_paths = [raw_dir + i for i in dirs]
+        images = preprocess_images(raw_paths)
         write_images(images, paths)
     if ratio is not None:
         cats = [images[i] for i, label in enumerate(labels) if label == 0]

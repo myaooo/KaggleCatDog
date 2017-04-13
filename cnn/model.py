@@ -12,6 +12,13 @@ print('I love you. #heart#')
 
 def build_model(train_data, train_labels, valid_data, valid_labels):
     # LeNet-5 like Model
+    model = model1()
+    model.set_data(train_data, train_labels, valid_data, valid_labels)
+    model.compile()
+    return model
+
+
+def model1():
     model = ConvNet('lenet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='relu')
@@ -27,8 +34,25 @@ def build_model(train_data, train_labels, valid_data, valid_labels):
     model.set_regularizer('l2', 1e-3)
     model.set_learning_rate(0.001)
     model.set_optimizer('Adam')
-    model.set_data(train_data, train_labels, valid_data, valid_labels)
-    model.compile()
+    return model
+
+
+def model2():
+    model = ConvNet('lenet2')
+    model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
+    model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='relu')
+    model.push_pool_layer('max', kernel_size=[1, 2, 2, 1], strides=[2, 2])
+    model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='relu')
+    model.push_pool_layer('max', kernel_size=[1, 2, 2, 1], strides=[2, 2])
+    model.push_flatten_layer()
+    model.push_fully_connected_layer(out_channels=128, activation='relu')
+    model.push_dropout_layer(0.5)
+    model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
+
+    model.set_loss('sparse_softmax')
+    model.set_regularizer('l2', 5e-4)
+    model.set_learning_rate(0.001)
+    model.set_optimizer('Adam')
     return model
 
 
