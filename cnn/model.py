@@ -1,7 +1,7 @@
 from cnn.convnet.convnet import ConvNet
 from cnn.convnet.recorder import ConvRecorder
-from cnn.convnet.utils import init_tf_environ
-from cnn.preprocess import IMG_SIZE, CHANNELS, NUM_LABELS, prep_data
+from cnn.convnet.utils import init_tf_environ, get_path
+from cnn.data.preprocess import IMG_SIZE, CHANNELS, NUM_LABELS, prep_data
 
 num_epochs = 10
 BATCH_SIZE = 50
@@ -36,7 +36,7 @@ def build_model():
     model.set_optimizer('Adam')
     model.set_data(train_data, train_labels, valid_data, valid_labels)
     model.compile()
-    rec = ConvRecorder(model, '../models/lenet/train')
+    rec = ConvRecorder(model, get_path('models', 'lenet/train'))
     return model
 
 
