@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 import cv2
 
-DATA_ROOT = os.path.abspath(os.path.join(__file__, '../../data'))
+DATA_ROOT = os.path.abspath(os.path.join(__file__, '../../../data'))
 RAW_TRAIN_DIR = os.path.join(DATA_ROOT, 'train/')
 RAW_TEST_DIR = os.path.join(DATA_ROOT, 'test/')
 PREPROCESSED = os.path.join(DATA_ROOT, 'preprocessed/')
@@ -70,7 +70,7 @@ def preprocess_images(image_paths, target_size=IMG_SIZE):
     return images
 
 
-def maybe_preprocess(train=True):
+def maybe_preprocess(train=True, ratio=None):
     if train:
         raw_dir = RAW_TRAIN_DIR
         target_dir = TRAIN_DIR
@@ -96,10 +96,24 @@ def maybe_preprocess(train=True):
         #     write_images(cats, cat_paths)
         #     write_images(dogs, dog_paths)
         write_images(images, paths)
-    images, labels = zip(*shuffle_data(list(zip(images, labels))))
-    data, labels = format_data(list(images), list(labels))
-    # labels = np.array(labels, dtype=label_type)
-    return data, labels
+    if ratio is not None:
+        cats = [images[i] for i, label in enumerate(labels) if label == 0]
+        dogs = [images[i] for i, label in enumerate(labels) if label == 1]
+        cat_train, cat_valid = split_data(cats, [1 - ratio, ratio])
+        dog_train, dog_valid = split_data(dogs, [1 - ratio, ratio])
+        images = cat_train + dog_train
+        labels = [0] * len(cat_train) + [1] * len(dog_train)
+        valid_images = cat_valid+dog_valid
+        valid_labels = [0] * len(cat_valid) + [1] * len(dog_valid)
+        images, labels = zip(*shuffle_data(list(zip(images, labels))))
+        data, labels = format_data(list(images), list(labels))
+        data2, labels2 = format_data(valid_images, valid_labels)
+        return [(data, labels), (data2, labels2)]
+    else:
+        images, labels = zip(*shuffle_data(list(zip(images, labels))))
+        data, labels = format_data(list(images), list(labels))
+        # labels = np.array(labels, dtype=label_type)
+        return [(data, labels)]
 
 
 def maybe_calculate(filename, cal_fn, *args, **kwargs):
@@ -125,9 +139,9 @@ def maybe_calculate(filename, cal_fn, *args, **kwargs):
 def prep_data(valid_ratio=0.2, test=False):
     assert 0 < valid_ratio < 1
     train_file = os.path.join(DATA_ROOT, 'tmp/train.pkl')
-    train_data, train_labels = maybe_calculate(train_file, maybe_preprocess)
-    train_data, valid_data = split_data(train_data, [1-valid_ratio, valid_ratio])
-    train_labels, valid_labels = split_data(train_labels, [1-valid_ratio, valid_ratio])
+    train, valid = maybe_calculate(train_file, maybe_preprocess, True, valid_ratio)
+    train_data, train_labels = train
+    valid_data, valid_labels = valid
     test_data = None
     if test:
         test_file = os.path.join(DATA_ROOT, 'tmp/test.pkl')
