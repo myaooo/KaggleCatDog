@@ -138,7 +138,8 @@ def prep_data(valid_ratio=0.2, test=False):
     test_data = None
     if test:
         test_file = os.path.join(DATA_ROOT, 'tmp/test.pkl')
-        test_data, _ = maybe_calculate(test_file, maybe_preprocess, False)
+        test_data, _ = maybe_calculate(test_file, maybe_preprocess, False)[0]
+
     return train_data, train_labels, valid_data, valid_labels, test_data, None
 
 
