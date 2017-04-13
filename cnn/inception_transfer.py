@@ -2,12 +2,12 @@ import tensorflow as tf
 import cnn.inception.inception_train as inception_train
 # import cnn.inception.inception_eval as inception_eval
 from cnn.inception.dataset import CatDogData
-from cnn.convnet.utils import get_path
+from cnn.convnet.utils import get_path, init_tf_environ
 
 FLAGS = tf.app.flags.FLAGS
 
-
 def main(_):
+    init_tf_environ(1)
     FLAGS.data_dir = get_path('data/preprocessed/new')
     FLAGS.train_dir = get_path('models/inception_transfer')
     FLAGS.pretrained_model_checkpoint_path = get_path('models/inception-v3/model.ckpt-157585')
