@@ -6,9 +6,8 @@ from cnn.convnet.utils import get_path, init_tf_environ
 
 FLAGS = tf.app.flags.FLAGS
 
-
 def main(_):
-    init_tf_environ(1)
+    init_tf_environ(2)
     FLAGS.data_dir = get_path('data/preprocessed/new')
     FLAGS.train_dir = get_path('models/inception_transfer')
     FLAGS.pretrained_model_checkpoint_path = get_path('models/inception-v3/model.ckpt-157585')

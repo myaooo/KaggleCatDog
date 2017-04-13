@@ -32,7 +32,7 @@ while read LABEL; do
 
   # Move the first randomly selected 100 images to the validation set.
   mkdir -p "${VALIDATION_DIR_FOR_LABEL}"
-  VALIDATION_IMAGES=$(ls -1 "${TRAIN_DIR_FOR_LABEL}" | gshuf | head -2500)
+  VALIDATION_IMAGES=$(ls -1 "${TRAIN_DIR_FOR_LABEL}" | shuf | head -2500)
   for IMAGE in ${VALIDATION_IMAGES}; do
     mv -f "${TRAIN_DIRECTORY}${LABEL}/${IMAGE}" "${VALIDATION_DIR_FOR_LABEL}"
   done

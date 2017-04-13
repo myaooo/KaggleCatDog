@@ -31,7 +31,7 @@ def model1():
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 5e-4)
+    model.set_regularizer('l2', 1e-3)
     model.set_learning_rate(0.001)
     model.set_optimizer('Adam')
     return model
@@ -63,6 +63,7 @@ def main():
     rec = ConvRecorder(model, get_path('models', 'lenet/train'))
     model.train(BATCH_SIZE, 1, EVAL_FREQUENCY)
     model.save()
+
 
 if __name__ == '__main__':
     main()
