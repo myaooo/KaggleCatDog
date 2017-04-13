@@ -73,7 +73,7 @@ def get_loss_func(str='sparse_softmax'):
     if callable(str):
         return str
     if str in __str2loss_func:
-        return __str2loss_func[str]
+        return lambda logits, labels: __str2loss_func[str](labels=labels, logits=logits)
     print('No matching loss function found. Using sparse softmax cross entropy by default.\n')
     return __str2loss_func['sparse_softmax']
 

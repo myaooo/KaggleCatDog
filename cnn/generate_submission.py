@@ -2,6 +2,7 @@ import io
 import csv
 
 from cnn.convnet.utils import before_save
+from cnn.convnet.convnet import ConvNet
 
 
 def lists2csv(lists, file_path, header=None, delimiter=',', encoding=None):
@@ -35,3 +36,11 @@ def generate_submission(predictions, file_name='submission.csv'):
     ids = list(range(1, len(predictions)+1))
     data = list(zip(ids, predictions))
     lists2csv(data, file_name, ['id', 'label'])
+    print("submission saved to {:s}".format(file_name))
+
+
+def convnet_submission(model, test_data, file_name='submission.csv'):
+    assert isinstance(model, ConvNet), "model should be an instance of ConvNet"
+    logits, predictions = model.infer_in_batches(model.sess, test_data, batch_size=50)
+    predictions = predictions[:, 1]
+    generate_submission(predictions, file_name)

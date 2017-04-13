@@ -15,6 +15,9 @@ mkdir -p "${TRAIN_DIRECTORY}/dog"
 mkdir -p "${TRAIN_DIRECTORY}/cat"
 mkdir -p "${OUTPUT_DIRECTORY}"
 
+echo "preprocessing data..."
+python ./cnn/data/preprocess.py
+
 for name in ./data/preprocessed/train/dog.*; do
   cp "$name" "./data/preprocessed/new_train/dog"
 done
