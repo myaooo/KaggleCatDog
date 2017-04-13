@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 import cv2
 
-DATA_ROOT = '../data/'
+DATA_ROOT = os.path.abspath(os.path.join(__file__, '../../data'))
 RAW_TRAIN_DIR = os.path.join(DATA_ROOT, 'train/')
 RAW_TEST_DIR = os.path.join(DATA_ROOT, 'test/')
 PREPROCESSED = os.path.join(DATA_ROOT, 'preprocessed/')
