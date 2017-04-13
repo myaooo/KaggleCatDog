@@ -37,7 +37,7 @@ def main():
     all_data = prep_data(test=False)
     model = build_model(*all_data[:4])
     rec = ConvRecorder(model, get_path('models', 'lenet/train'))
-    model.train(BATCH_SIZE, 1, EVAL_FREQUENCY)
+    model.train(BATCH_SIZE, 10, EVAL_FREQUENCY)
     model.save()
 
 
