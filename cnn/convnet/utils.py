@@ -2,10 +2,16 @@
 Utilities for convnet.py
 """
 
-import tensorflow as tf
 import math
-import tensorflow.contrib.layers as tflayers
 import os
+import re
+import subprocess
+
+import tensorflow as tf
+import tensorflow.contrib.layers as tflayers
+
+
+base_dir = os.path.abspath(os.path.join(__file__, '../../../'))
 
 __str2activation = {
     'linear': lambda x: x,
@@ -169,3 +175,96 @@ def before_save(file_or_dir):
     dir_name = os.path.dirname(os.path.abspath(file_or_dir))
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
+
+
+def get_path(path, file_name=None, absolute=False):
+    """
+    A helper function that get the real/abs path of a file on disk, with the project dir as the base dir.
+    Note: there is no checking on the illegality of the args!
+    :param path: a relative path to base_dir, optional file_name to use
+    :param file_name: an optional file name under the path
+    :param absolute: return the absolute path
+    :return: return the path relative to the project root dir, default to return relative path to the called place.
+    """
+    _p = os.path.join(base_dir, path)
+    if file_name:
+        _p = os.path.join(_p, file_name)
+    if absolute:
+        return os.path.abspath(_p)
+    return os.path.relpath(_p)
+
+
+def init_tf_environ(gpu_num=0):
+    """
+    Init CUDA environments, which the number of gpu to use
+    :param gpu_num:
+    :return:
+    """
+    cuda_devices = ""
+    if gpu_num == 0:
+        print("Not using any gpu devices.")
+    else:
+        try:
+            best_gpus = pick_gpu_lowest_memory(gpu_num)
+            cuda_devices = ",".join([str(e) for e in best_gpus])
+            print("Using gpu device: {:s}".format(cuda_devices))
+        except:
+            cuda_devices = ""
+            print("Cannot find gpu devices!")
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = cuda_devices
+    # if FLAGS.gpu_num == 0 else "0,1,2,3"[:(FLAGS.gpu_num * 2 - 1)]
+
+
+def config_proto():
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1.0)
+    return tf.ConfigProto(device_count={"GPU": 1}, gpu_options=gpu_options, allow_soft_placement=True)
+
+# Nvidia-smi GPU memory parsing.
+# Tested on nvidia-smi 370.23
+
+def run_command(cmd):
+    """Run command, return output as string."""
+    output = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]
+    return output.decode("ascii")
+
+
+def list_available_gpus():
+    """Returns list of available GPU ids."""
+    output = run_command("nvidia-smi -L")
+    # lines of the form GPU 0: TITAN X
+    gpu_regex = re.compile(r"GPU (?P<gpu_id>\d+):")
+    result = []
+    for line in output.strip().split("\n"):
+        m = gpu_regex.match(line)
+        assert m, "Couldn't parse "+line
+        result.append(int(m.group("gpu_id")))
+    return result
+
+
+def gpu_memory_map():
+    """Returns map of GPU id to memory allocated on that GPU."""
+
+    output = run_command("nvidia-smi")
+    gpu_output = output[output.find("GPU Memory"):]
+    # lines of the form
+    # |    0      8734    C   python                                       11705MiB |
+    memory_regex = re.compile(r"[|]\s+?(?P<gpu_id>\d+)\D+?(?P<pid>\d+).+[ ](?P<gpu_memory>\d+)MiB")
+    rows = gpu_output.split("\n")
+    result = {gpu_id: 0 for gpu_id in list_available_gpus()}
+    for row in gpu_output.split("\n"):
+        m = memory_regex.search(row)
+        if not m:
+            continue
+        gpu_id = int(m.group("gpu_id"))
+        gpu_memory = int(m.group("gpu_memory"))
+        result[gpu_id] += gpu_memory
+    return result
+
+
+def pick_gpu_lowest_memory(num=1):
+    """Returns GPU with the least allocated memory"""
+
+    memory_gpu_map = [(memory, gpu_id) for (gpu_id, memory) in gpu_memory_map().items()]
+    best_memorys, best_gpus = list(zip(*sorted(memory_gpu_map)[:num]))
+    return best_gpus

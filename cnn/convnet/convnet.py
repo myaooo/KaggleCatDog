@@ -8,13 +8,16 @@
 import math
 import time
 import sys
+import os
 import numpy as np
 import tensorflow as tf
-from .sequential_net import Layer, SequentialNet
-from .classifier import Classifier
-from . import utils
-from .utils import get_activation, get_learning_rate, get_optimizer, get_regularizer, get_loss_func, output_shape
-from .message_protoc.log_message import create_training_log_message, add_evaluation_log_message, log_beautiful_print
+from cnn.convnet.sequential_net import Layer, SequentialNet
+from cnn.convnet.classifier import Classifier
+from cnn.convnet import utils
+from cnn.convnet.utils import \
+    get_activation, get_learning_rate, get_optimizer, \
+    get_regularizer, get_loss_func, output_shape, get_path, config_proto
+from cnn.convnet.message_protoc.log_message import create_training_log_message, add_evaluation_log_message, log_beautiful_print
 
 SEED = None
 _EVAL_BATCH_SIZE = 100
@@ -294,7 +297,7 @@ class ConvNet(SequentialNet, Classifier):
         self.dtype = dtype
         # array of layer names
         self.layers = []
-        self.sess = tf.Session()
+        self._sess = None
         self._after_one_batch = []
 
         # Data and labels
@@ -337,6 +340,11 @@ class ConvNet(SequentialNet, Classifier):
         self.cur_epoch = tf.Variable(0, dtype=Float, name='cur_epoch', trainable=False)
         self.regularizer = lambda x: 0
         self.regularized_term = None
+        self._logdir = None
+        self._saver = None
+        self.graph = tf.get_default_graph()
+        self.finalized = False
+        self._init_op = None
 
     def push_input_layer(self, dshape=None):
         """
@@ -588,10 +596,8 @@ class ConvNet(SequentialNet, Classifier):
         eval_frequency *= batch_per_epoch
         print('start training...')
         epoch_time = step_time = start_time = time.time()
-        with self.sess as sess:
-            # Initialize all global variables
-            # By default, trainable weights and biases are in global scope
-            sess.run(tf.global_variables_initializer())
+        sess = self.sess
+        with self.graph.as_default():
             for step in range(total_step):
                 # Get next train batch
                 feed_dict = self.feed_dict()
@@ -675,7 +681,11 @@ class ConvNet(SequentialNet, Classifier):
         acc, acc5 = sess.run([self.acc, self.acc5], {self.eval_prediction: predictions, self.eval_labels_node: labels})
         return loss, acc, acc5
 
-    def save2file(self, sess, step, name=None):
+    @property
+    def logdir(self):
+        return self._logdir or get_path('./models', self.name_or_scope)
+
+    def save(self, sess=None, path=None):
         """
         Save the trained model to disk
         :param sess: the running Session
@@ -683,14 +693,55 @@ class ConvNet(SequentialNet, Classifier):
         :param name: name of the model file
         :return: None
         """
-        if name is None:
-            name = self.name_or_scope + '/model'
-        utils.before_save(name)
-        saver = tf.train.Saver()
-        saver.save(sess, name, global_step=step)
+        self.finalize()
+        path = path if path is not None else os.path.join(self.logdir, 'model')
+            # name = self.name_or_scope + '/model'
+        if sess is None:
+            sess = self.sess
+        utils.before_save(path)
+        self._saver.save(sess, path)
+        print("Model variables saved to {}.".format(get_path(path, absolute=True)))
 
-    def load(self, filename):
-        pass
+    def restore(self, path=None):
+        self.finalize()
+        path = path if path is not None else self.logdir
+        checkpoint = tf.train.latest_checkpoint(path)
+        # print(path)
+        # print(checkpoint)
+        self._saver.restore(self.sess, checkpoint)
+        # with self.supervisor.managed_session() as sess:
+        #     self.supervisor.saver.restore(sess, checkpoint)
+        print("Model variables restored from {}.".format(get_path(path, absolute=True)))
+
+    @property
+    def sess(self):
+        self.finalize()
+        if self._sess is None or self._sess._closed:
+            self._sess = tf.Session(graph=self.graph, config=config_proto())
+            self._sess.run(self._init_op)
+        return self._sess
+
+    def finalize(self):
+        """
+        After all the computation ops are built in the graph, build a supervisor which implicitly finalize the graph
+        :return: None
+        """
+        if self.finalized:
+            # print("Graph has already been finalized!")
+            return False
+        with self.graph.as_default():
+            self._init_op = tf.global_variables_initializer()
+            self._saver = tf.train.Saver(tf.trainable_variables())
+        self.finalized = True
+        # self.graph.finalize()
+        # self.supervisor = tf.train.Supervisor(self.graph, logdir=self.logdir)
+        return True
+
+    def run_with_context(self, func, *args, **kwargs):
+        assert self.is_compiled
+        self.finalize()
+        with self.graph.as_default():
+            return func(self.sess, *args, **kwargs)
 
 
 def load_model_from_yml(filename):
