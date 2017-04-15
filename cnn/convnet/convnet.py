@@ -598,11 +598,15 @@ class ConvNet(SequentialNet, Classifier):
         epoch_time = step_time = start_time = time.time()
         sess = self.sess
         with self.graph.as_default():
+            epoch_loss = 0
             for step in range(total_step):
+                if (step+1) % batch_per_epoch == 0:
+                    epoch_loss = 0
                 # Get next train batch
                 feed_dict = self.feed_dict()
                 # Train one batch
-                sess.run(self.optimizer_op, feed_dict)
+                _, local_loss = sess.run([self.optimizer_op, self.loss], feed_dict)
+                epoch_loss += local_loss
                 # Maybe print log
                 if (step+1) % (batch_per_epoch//10) == 0:
                     # test_step = tf.train.global_step(sess, self.global_step)
@@ -611,8 +615,9 @@ class ConvNet(SequentialNet, Classifier):
                     lr = self.learning_rate
                     if isinstance(self.learning_rate, tf.Tensor):
                         lr = sess.run(self.learning_rate, feed_dict)
-                    local_loss = sess.run(self.loss, feed_dict)
-                    msg = create_training_log_message(cur_epoch, batch, batch_per_epoch, float(local_loss),
+                    # local_loss = sess.run(self.loss, feed_dict)
+                    msg = create_training_log_message(cur_epoch, batch, batch_per_epoch,
+                                                      float(epoch_loss/((step+1) % batch_per_epoch)),
                                                       lr, time.time()-step_time)
                     step_time = time.time()
                     if (step+1) % eval_frequency == 0:

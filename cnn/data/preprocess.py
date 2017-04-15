@@ -102,11 +102,13 @@ def maybe_preprocess(train=True, ratio=None):
         data, labels = format_data(list(images), list(labels))
         data2, labels2 = format_data(valid_images, valid_labels)
         return [(data, labels), (data2, labels2)]
-    else:
+    if train:
         images, labels = zip(*shuffle_data(list(zip(images, labels))))
         data, labels = format_data(list(images), list(labels))
         # labels = np.array(labels, dtype=label_type)
         return [(data, labels)]
+    else:
+        return [format_data(images, labels)]
 
 
 def maybe_calculate(filename, cal_fn, *args, **kwargs):
