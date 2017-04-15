@@ -7,14 +7,14 @@ from cnn.convnet.utils import get_path, init_tf_environ
 FLAGS = tf.app.flags.FLAGS
 
 def main(_):
-    init_tf_environ(2)
+    init_tf_environ(1)
     FLAGS.data_dir = get_path('data/preprocessed/new')
     FLAGS.train_dir = get_path('models/inception_transfer')
     FLAGS.pretrained_model_checkpoint_path = get_path('models/inception-v3/model.ckpt-157585')
-    FLAGS.max_steps = 20000
+    FLAGS.max_steps = 40000
     FLAGS.fine_tune = True
     FLAGS.subset = 'train'
-    FLAGS.initial_learning_rate = 0.001
+    FLAGS.initial_learning_rate = 0.005
     FLAGS.num_epochs_per_decay = 5
     FLAGS.learning_rate_decay_factor = 0.9
     dataset = CatDogData(subset=FLAGS.subset)
