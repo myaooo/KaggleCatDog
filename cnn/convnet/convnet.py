@@ -617,7 +617,7 @@ class ConvNet(SequentialNet, Classifier):
                         lr = sess.run(self.learning_rate, feed_dict)
                     # local_loss = sess.run(self.loss, feed_dict)
                     msg = create_training_log_message(cur_epoch, batch, batch_per_epoch,
-                                                      float(epoch_loss/((step+1) % batch_per_epoch)),
+                                                      float(epoch_loss/((step % batch_per_epoch) + 1)),
                                                       lr, time.time()-step_time)
                     step_time = time.time()
                     if (step+1) % eval_frequency == 0:
