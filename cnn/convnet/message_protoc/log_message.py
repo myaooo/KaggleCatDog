@@ -6,7 +6,7 @@ def create_training_log_message(epoch, batch, batch_num, epoch_loss, learning_ra
     msg.epoch = epoch
     msg.batch = batch
     msg.batch_num = batch_num
-    msg.epoch_loss = epoch_loss
+    msg.batch_loss = epoch_loss
     msg.learning_rate = learning_rate
     msg.time = time
 
@@ -26,7 +26,7 @@ def log_beautiful_print(train_message):
     out = '[Epoch {:>2}]'.format(train_message.epoch)
     out += '(batch{:>3}/{:>3}) '.format(train_message.batch, train_message.batch_num)
     out += 'Time: {:.2f}s, Epoch Loss: {:.3f}, lr: {:.4f}'.format(train_message.time,
-                                                              train_message.epoch_loss,
+                                                              train_message.batch_loss,
                                                               train_message.learning_rate)
     print(out)
     if train_message.HasField('eval_message'):
