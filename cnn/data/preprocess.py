@@ -35,7 +35,7 @@ def before_save(file_or_dir):
 
 
 def read_image(file_path):
-    img = cv2.imread(file_path, cv2.IMREAD_COLOR) #cv2.IMREAD_GRAYSCALE
+    img = cv2.imread(file_path, cv2.IMREAD_COLOR)  # cv2.IMREAD_GRAYSCALE
     return img
 
 
@@ -63,8 +63,8 @@ def preprocess_images(image_paths, target_size=IMG_SIZE):
     count = len(image_paths)
     images = []
     for i, image_path in enumerate(image_paths):
-        if (i+1) % 1000 == 0:
-            print("Resizing {}/{}".format(i+1, count))
+        if (i + 1) % 1000 == 0:
+            print("Resizing {}/{}".format(i + 1, count))
         image = read_image(image_path)
         images.append(cv2.resize(image, target_size, interpolation=cv2.INTER_CUBIC))
     return images
@@ -96,17 +96,19 @@ def maybe_preprocess(train=True, ratio=None):
         dog_train, dog_valid = split_data(dogs, [1 - ratio, ratio])
         images = cat_train + dog_train
         labels = [0] * len(cat_train) + [1] * len(dog_train)
-        valid_images = cat_valid+dog_valid
+        valid_images = cat_valid + dog_valid
         valid_labels = [0] * len(cat_valid) + [1] * len(dog_valid)
         images, labels = zip(*shuffle_data(list(zip(images, labels))))
         data, labels = format_data(list(images), list(labels))
         data2, labels2 = format_data(valid_images, valid_labels)
         return [(data, labels), (data2, labels2)]
-    else:
+    if train:
         images, labels = zip(*shuffle_data(list(zip(images, labels))))
         data, labels = format_data(list(images), list(labels))
         # labels = np.array(labels, dtype=label_type)
         return [(data, labels)]
+    else:
+        return [format_data(images, labels)]
 
 
 def maybe_calculate(filename, cal_fn, *args, **kwargs):
@@ -155,7 +157,7 @@ def split_data(data_list, ratios):
     start = 0
     length = len(data_list)
     for ratio in ratios:
-        end = start + round(ratio*length)
+        end = start + round(ratio * length)
         splitted.append(data_list[start:end])
         start = end
     return splitted
@@ -168,10 +170,11 @@ def format_data(images, labels=None):
     :return: an instance of np.array
     """
     # _images = [image.T for image in images]
-    data = np.stack(images, axis=0).astype(data_type)/255 - 0.5
+    data = np.stack(images, axis=0).astype(data_type) / 255 - 0.5
     if labels is not None:
         labels = np.array(labels, label_type)
     return data, labels
+
 
 # train_images = [TRAIN_DIR+i for i in os.listdir(TRAIN_DIR)] # use this for full dataset
 # # train_dogs = [TRAIN_DIR+i for i in os.listdir(TRAIN_DIR) if 'dog' in i]

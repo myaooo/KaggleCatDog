@@ -74,9 +74,9 @@ tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.16,
                           """Learning rate decay factor.""")
 
 # Constants dictating the learning rate schedule.
-RMSPROP_DECAY = 0.9                # Decay term for RMSProp.
-RMSPROP_MOMENTUM = 0.9             # Momentum in RMSProp.
-RMSPROP_EPSILON = 1.0              # Epsilon term for RMSProp.
+RMSPROP_DECAY = 0.9  # Decay term for RMSProp.
+RMSPROP_MOMENTUM = 0.9  # Momentum in RMSProp.
+RMSPROP_EPSILON = 1.0  # Epsilon term for RMSProp.
 
 
 def _tower_loss(images, labels, num_classes, scope, reuse_variables=None):

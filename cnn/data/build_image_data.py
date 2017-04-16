@@ -79,6 +79,8 @@ tf.app.flags.DEFINE_string('train_directory', '/tmp/',
                            'Training data directory')
 tf.app.flags.DEFINE_string('validation_directory', '/tmp/',
                            'Validation data directory')
+tf.app.flags.DEFINE_string('test_directory', '/tmp/',
+                           'Test data directory')
 tf.app.flags.DEFINE_string('output_directory', '/tmp/',
                            'Output data directory')
 
@@ -86,6 +88,8 @@ tf.app.flags.DEFINE_integer('train_shards', 2,
                             'Number of shards in training TFRecord files.')
 tf.app.flags.DEFINE_integer('validation_shards', 2,
                             'Number of shards in validation TFRecord files.')
+tf.app.flags.DEFINE_integer('test_shards', 2,
+                            'Number of shards in test TFRecord files.')
 
 tf.app.flags.DEFINE_integer('num_threads', 2,
                             'Number of threads to preprocess the images.')
@@ -429,6 +433,9 @@ def main(unused_argv):
     assert not FLAGS.validation_shards % FLAGS.num_threads, (
         'Please make the FLAGS.num_threads commensurate with '
         'FLAGS.validation_shards')
+    assert not FLAGS.test_shards % FLAGS.num_threads, (
+        'Please make the FLAGS.num_threads commensurate with '
+        'FLAGS.test_shards')
     print('Saving results to %s' % FLAGS.output_directory)
 
     # Run it!
@@ -436,7 +443,8 @@ def main(unused_argv):
                      FLAGS.validation_shards, FLAGS.labels_file)
     _process_dataset('train', FLAGS.train_directory,
                      FLAGS.train_shards, FLAGS.labels_file)
-
+    _process_dataset('test', FLAGS.test_directory,
+                     FLAGS.test_shards, FLAGS.labels_file)
 
 if __name__ == '__main__':
     tf.app.run()

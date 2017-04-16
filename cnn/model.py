@@ -62,6 +62,7 @@ def model2():
     model.set_optimizer('Adam')
     return model
 
+
 def model3():
 # Network in Network
     model = ConvNet('NIN')
