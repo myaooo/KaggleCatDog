@@ -338,25 +338,29 @@ def train(dataset):
             FLAGS.train_dir,
             graph=sess.graph)
 
+        accum_loss = 0
         for step in range(FLAGS.max_steps):
             start_time = time.time()
+
             _, loss_value = sess.run([train_op, loss])
             duration = time.time() - start_time
 
             assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
+            accum_loss += loss_value
 
-            if step % 10 == 0:
+            if (step+1) % 50 == 0:
                 examples_per_sec = FLAGS.batch_size / float(duration)
                 format_str = ('%s: step %d, loss = %.2f (%.1f examples/sec; %.3f '
                               'sec/batch)')
-                print(format_str % (datetime.now(), step, loss_value,
+                print(format_str % (datetime.now(), step, accum_loss/50,
                                     examples_per_sec, duration))
+                accum_loss = 0
 
-            if step % 100 == 0:
+            if (step + 1) % 500 == 0:
                 summary_str = sess.run(summary_op)
                 summary_writer.add_summary(summary_str, step)
 
             # Save the model checkpoint periodically.
-            if step % 10000 == 0 or (step + 1) == FLAGS.max_steps:
+            if (step + 1) % 10000 == 0 or (step + 1) == FLAGS.max_steps:
                 checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
-                saver.save(sess, checkpoint_path, global_step=step)
+                saver.save(sess, checkpoint_path, global_step=step+1)
