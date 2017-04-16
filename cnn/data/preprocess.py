@@ -1,6 +1,7 @@
 import os
 import pickle
 import random
+import re
 
 import numpy as np
 import tensorflow as tf
@@ -74,11 +75,13 @@ def maybe_preprocess(train=True, ratio=None):
     if train:
         raw_dir = RAW_TRAIN_DIR
         target_dir = TRAIN_DIR
+        dirs = os.listdir(raw_dir)
     else:
         raw_dir = RAW_TEST_DIR
         target_dir = TEST_DIR
+        dirs = sort_by_name(os.listdir(raw_dir))
     print("Preprocessing {:s} data...".format('train' if train else 'test'))
-    dirs = os.listdir(raw_dir)
+
     paths = [target_dir + i for i in dirs]
     labels = [0 if 'cat' in i else 1 if 'dog' in i else -1 for i in dirs]
     if os.path.exists(target_dir):
@@ -108,8 +111,19 @@ def maybe_preprocess(train=True, ratio=None):
         # labels = np.array(labels, dtype=label_type)
         return [(data, labels)]
     else:
-        print(dirs)
+        # print(dirs)
         return [format_data(images, labels)]
+
+
+def sort_by_name(dirs, remove='.jpg'):
+    """
+    Remove the format string from dirs and sort by numerical order of the files
+    :param dirs:
+    :param remove:
+    :return:
+    """
+    remove_len = len(remove)
+    return sorted(dirs, key=lambda dir_: int(dir_[:-remove_len]))
 
 
 def maybe_calculate(filename, cal_fn, *args, **kwargs):
