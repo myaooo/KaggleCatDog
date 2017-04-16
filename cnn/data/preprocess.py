@@ -108,6 +108,7 @@ def maybe_preprocess(train=True, ratio=None):
         # labels = np.array(labels, dtype=label_type)
         return [(data, labels)]
     else:
+        print(dirs)
         return [format_data(images, labels)]
 
 
