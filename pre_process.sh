@@ -13,9 +13,10 @@ rm -r "${TRAIN_DIRECTORY}"
 rm -r "${VALIDATION_DIRECTORY}"
 rm -r "${TEST_DIRECTORY}"
 rm -r "${OUTPUT_DIRECTORY}"
-mkdir -p "${TRAIN_DIRECTORY}/dog"
-mkdir -p "${TRAIN_DIRECTORY}/cat"
-mkdir -p "${TEST_DIRECTORY}/cat"
+mkdir -p "${TRAIN_DIRECTORY}dog"
+mkdir -p "${TRAIN_DIRECTORY}cat"
+mkdir -p "${TEST_DIRECTORY}cat"
+mkdir -p "${TEST_DIRECTORY}dog"
 mkdir -p "${OUTPUT_DIRECTORY}"
 
 echo "preprocessing data..."
@@ -27,15 +28,15 @@ if [[ "$unamestr" == 'Linux' ]]; then
 fi
 
 for name in ./data/preprocessed/train/dog.*; do
-  cp "$name" "${TRAIN_DIRECTORY}/dog"
+  cp "$name" "${TRAIN_DIRECTORY}dog"
 done
 
 for name in ./data/preprocessed/train/cat.*; do
-  cp "$name" "${TRAIN_DIRECTORY}/cat"
+  cp "$name" "${TRAIN_DIRECTORY}cat"
 done
 
 for name in ./data/preprocessed/test/*; do
-  cp "$name" "${TEST_DIRECTORY}/cat"
+  cp "$name" "${TEST_DIRECTORY}cat"
 done
 
 while read LABEL; do
