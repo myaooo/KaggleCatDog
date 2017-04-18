@@ -5,6 +5,7 @@ import re
 
 import numpy as np
 import tensorflow as tf
+from keras.preprocessing.image import ImageDataGenerator
 import cv2
 
 DATA_ROOT = os.path.abspath(os.path.join(__file__, '../../../data'))
@@ -17,6 +18,7 @@ TEST_DIR = os.path.join(PREPROCESSED, 'test/')
 IMG_SIZE = (64, 64)
 CHANNELS = 3
 NUM_LABELS = 2
+BATCH_SIZE = 50
 
 SEED = None
 
@@ -180,14 +182,14 @@ def prep_data(valid_ratio=0.2, test=False):
     assert 0 < valid_ratio < 1
     train_file = os.path.join(DATA_ROOT, 'tmp/train.pkl')
     train, valid = maybe_calculate(train_file, maybe_preprocess, True, valid_ratio)
-    train_data, train_labels = train
-    valid_data, valid_labels = valid
+    train = generate_data(train[0], train[1], BATCH_SIZE, True)
+    valid = generate_data(valid[0], valid[1], BATCH_SIZE, False)
     test_data = None
     if test:
         test_file = os.path.join(DATA_ROOT, 'tmp/test.pkl')
         test_data, _ = maybe_calculate(test_file, maybe_preprocess, False)[0]
 
-    return train_data, train_labels, valid_data, valid_labels, test_data, None
+    return train, valid, test_data
 
 
 def shuffle_data(data_list):
@@ -221,11 +223,32 @@ def format_data(images, labels=None):
     return data, labels
 
 
-# train_images = [TRAIN_DIR+i for i in os.listdir(TRAIN_DIR)] # use this for full dataset
-# # train_dogs = [TRAIN_DIR+i for i in os.listdir(TRAIN_DIR) if 'dog' in i]
-# # train_cats = [TRAIN_DIR+i for i in os.listdir(TRAIN_DIR) if 'cat' in i]
-#
-# test_images = [TEST_DIR+i for i in os.listdir(TEST_DIR)]
+def generate_data(X, y, batch_size=32, train=True):
+    """
+    Using the returned data and label from maybe_preprocess / format_data,
+    return a keras data generator.
+    Only intended to use for training data
+    :param X: a 4D array, formatted data
+    :param y: a 1D array, label array
+    :param batch_size:
+    :param train
+    :return: a keras generator
+    """
+    if train:
+        datagen = ImageDataGenerator(
+            rotation_range=20,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            shear_range=0.2,
+            zoom_range=0.2,
+            horizontal_flip=True,
+            fill_mode='nearest')
+    else:
+        datagen = ImageDataGenerator()
+    data_generator = datagen.flow(
+        X, y,
+        batch_size=batch_size)
+    return data_generator
 
 
 if __name__ == '__main__':

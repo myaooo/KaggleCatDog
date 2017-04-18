@@ -1,19 +1,18 @@
 from cnn.convnet.convnet import ConvNet
 from cnn.convnet.recorder import ConvRecorder
 from cnn.convnet.utils import init_tf_environ, get_path
-from cnn.data.preprocess import IMG_SIZE, CHANNELS, NUM_LABELS, prep_data
+from cnn.data.preprocess import IMG_SIZE, CHANNELS, NUM_LABELS, prep_data, BATCH_SIZE
 
 num_epochs = 25
-BATCH_SIZE = 20
 EVAL_FREQUENCY = 1
 
 print('I love you. #heart#')
 
 
-def build_model(train_data, train_labels, valid_data, valid_labels):
+def build_model(train_data_generator, valid_data_generator):
     # LeNet-5 like Model
     model = model2()
-    model.set_data(train_data, train_labels, valid_data, valid_labels)
+    model.set_data(train_data_generator, valid_data_generator)
     model.compile()
     return model
 
@@ -66,7 +65,7 @@ def model2():
 
 
 def model3():
-# Network in Network
+    # Network in Network
     model = ConvNet('NIN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='relu')
@@ -94,10 +93,11 @@ def model3():
     model.set_optimizer('Adam')
     return model
 
+
 def main():
     init_tf_environ(gpu_num=1)
     all_data = prep_data(test=False)
-    model = build_model(*all_data[:4])
+    model = build_model(*all_data[:2])
     rec = ConvRecorder(model, get_path('models', 'lenet/train'))
     model.train(BATCH_SIZE, num_epochs, EVAL_FREQUENCY)
     model.save()

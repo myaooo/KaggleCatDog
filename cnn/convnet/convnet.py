@@ -301,10 +301,8 @@ class ConvNet(SequentialNet, Classifier):
         self._after_one_batch = []
 
         # Data and labels
-        self.train_data = None
-        self.train_labels = None
-        self.test_data = None
-        self.test_labels = None
+        self.train_data_generator = None
+        self.test_data_generator = None
         # batch_size to be determined when training
         self.batch_size = -1
 
@@ -473,19 +471,18 @@ class ConvNet(SequentialNet, Classifier):
             kwargs['decay_steps'] = self.train_size_node
             self.learning_rate = get_learning_rate(update_func, **kwargs)
 
-    def set_data(self, train_data, train_labels, test_data=None, test_labels=None):
+    def set_data(self, train_data_generator, test_data_generator=None):
         """
         Set the training data and test data
-        :param train_data:
-        :param train_labels:
-        :param test_data:
-        :param test_labels:
+        :param train_data_generator:
+        :param test_data_generator:
         :return:
         """
-        self.train_data = train_data
-        self.train_labels = train_labels
-        self.test_data = test_data
-        self.test_labels = test_labels
+        assert train_data_generator.n % train_data_generator.batch_size == 0
+        self.train_data_generator = train_data_generator
+        if test_data_generator is not None:
+            assert test_data_generator.n % test_data_generator.batch_size == 0
+        self.test_data_generator = test_data_generator
 
     def _cal_loss(self, data_node, labels_node, train, name):
         # logits: the raw output of the model
@@ -535,11 +532,9 @@ class ConvNet(SequentialNet, Classifier):
                     self.acc5 = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 5, name='acc5')
 
         # check requirements for training
-        assert self.train_data is not None
-        assert self.train_labels is not None
+        assert self.train_data_generator is not None
         if test:
-            assert self.test_data is not None
-            assert self.test_labels is not None
+            assert self.test_data_generator is not None
 
     def model(self, data, train=False):
         """
@@ -567,11 +562,10 @@ class ConvNet(SequentialNet, Classifier):
         Evaluate global_step tensor as step and use step to generate feed_dict for **training**
         :return: A dict used as feed_dict in a mini-batch of training
         """
-        step = tf.train.global_step(self.sess, self.global_step) - 1
-        train_size = self.train_labels.shape[0]
-        offset = (step * self.batch_size) % (train_size - self.batch_size)
-        batch_data = self.train_data[offset:(offset + self.batch_size), ...]
-        batch_labels = self.train_labels[offset:(offset + self.batch_size)]
+        # step = tf.train.global_step(self.sess, self.global_step) - 1
+        # train_size = self.train_size
+        # offset = (step * self.batch_size) % (train_size - self.batch_size)
+        batch_data, batch_labels = self.train_data_generator.next()
         feed_dict = {self.train_data_node: batch_data,
                      self.train_labels_node: batch_labels}
         feed_dict.update(self.lr_feed_dict)
@@ -587,8 +581,8 @@ class ConvNet(SequentialNet, Classifier):
         :return: None
         """
         self.batch_size = batch_size
-        train_size = self.train_labels.shape[0]
-        eval_size = self.test_labels.shape[0]
+        train_size = self.train_size
+        eval_size = self.test_size
         self.lr_feed_dict = {self.train_size_node: train_size, self.batch_size_node: batch_size}
 
         batch_per_epoch = int(train_size / batch_size)
@@ -620,7 +614,7 @@ class ConvNet(SequentialNet, Classifier):
                     step_time = time.time()
                     if (step + 1) % eval_frequency == 0:
                         # Do evaluation
-                        loss, acc, acc5 = self.eval(sess, self.test_data, self.test_labels, batch_size)
+                        loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
                         add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
                                                    time.time() - epoch_time, eval_size)
                         epoch_time = time.time()
@@ -673,23 +667,45 @@ class ConvNet(SequentialNet, Classifier):
                                                  feed_dict={self.eval_logits: logits[begin:end, :]})
         return logits, predictions
 
-    def eval(self, sess, data, labels, batch_size=200):
+    def eval(self, sess, data_generator=None, data=None, labels=None, batch_size=200):
         """
         The evaluating function that will be called at the training API
         :param sess: the tf.Session() to run the computation
+        :param data_generator: a data generator
         :param data: data used to evaluate the model
         :param labels: data's corresponding labels used to evaluate the model
-        :param batch_size: batch sizze
+        :param batch_size: batch size
         :return: loss accuracy and accuracy-5
         """
-        logits, predictions = self.infer_in_batches(sess, data, batch_size)
-        loss = sess.run(self.eval_loss, {self.eval_logits: logits, self.eval_labels_node: labels})
-        acc, acc5 = sess.run([self.acc, self.acc5], {self.eval_prediction: predictions, self.eval_labels_node: labels})
-        return loss, acc, acc5
+        if data_generator is None:
+            assert data is not None and labels is not None
+            logits, predictions = self.infer_in_batches(sess, data, batch_size)
+            loss = sess.run(self.eval_loss, {self.eval_logits: logits, self.eval_labels_node: labels})
+            acc, acc5 = sess.run([self.acc, self.acc5], {self.eval_prediction: predictions, self.eval_labels_node: labels})
+            return loss, acc, acc5
+        else:
+            loss = acc = acc5 = 0
+            batch_num = math.ceil(data_generator.n / data_generator.batch_size)
+            for i in range(0, data_generator.n, data_generator.batch_size):
+                data, label = data_generator.next()
+                loss_, acc_, acc5_ = sess.run([self.eval_loss, self.acc, self.acc5],
+                                              {self.eval_data_node: data, self.eval_labels_node: label})
+                loss += loss_
+                acc += acc_
+                acc5 += acc5_
+            return loss/batch_num, acc / batch_num, acc5/batch_num
 
     @property
     def logdir(self):
         return self._logdir or get_path('./models', self.name_or_scope)
+
+    @property
+    def train_size(self):
+        return self.train_data_generator.n
+
+    @property
+    def test_size(self):
+        return self.test_data_generator.n
 
     def save(self, sess=None, path=None):
         """
