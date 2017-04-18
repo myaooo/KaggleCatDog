@@ -17,7 +17,8 @@ from cnn.convnet import utils
 from cnn.convnet.utils import \
     get_activation, get_learning_rate, get_optimizer, \
     get_regularizer, get_loss_func, output_shape, get_path, config_proto
-from cnn.convnet.message_protoc.log_message import create_training_log_message, add_evaluation_log_message, log_beautiful_print
+from cnn.convnet.message_protoc.log_message import create_training_log_message, add_evaluation_log_message, \
+    log_beautiful_print
 
 SEED = None
 _EVAL_BATCH_SIZE = 100
@@ -66,12 +67,13 @@ class InputLayer(Layer):
         No need to compile
         """
         return True
-    
+
 
 class ConvLayer(Layer):
     """Input Layer"""
 
-    def __init__(self, filter_size, out_channels, strides, name_or_scope, padding='SAME', activation='linear', has_bias=True):
+    def __init__(self, filter_size, out_channels, strides, name_or_scope, padding='SAME', activation='linear',
+                 has_bias=True):
         """
 
         :param filter: of shape [m,n]
@@ -97,10 +99,10 @@ class ConvLayer(Layer):
     def __call__(self, input, name=''):
         with tf.variable_scope(self.name_or_scope, reuse=True):
             super().__call__(input)
-            result = tf.nn.conv2d(input, self.filters, self.strides, self.padding, name='conv'+name)
+            result = tf.nn.conv2d(input, self.filters, self.strides, self.padding, name='conv' + name)
             if self.has_bias:
                 result = result + self.bias
-            return self.activation(result, name='activate'+name)
+            return self.activation(result, name='activate' + name)
 
     def compile(self):
         assert self.prev is not None
@@ -114,7 +116,7 @@ class ConvLayer(Layer):
         with tf.variable_scope(name_or_scope=self.name_or_scope) as scope:
             self.scope_name = scope.name
             self.filters = tf.get_variable('filters', shape=self.shape, dtype=Float,
-                                           initializer=tf.truncated_normal_initializer( stddev=0.1, dtype=Float),
+                                           initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=Float),
                                            collections=weight_keys)
             tf.summary.tensor_summary(tf.get_variable_scope().name + '_filters', self.filters)
             if self.has_bias:
@@ -140,6 +142,7 @@ class ConvLayer(Layer):
 
 class PoolLayer(Layer):
     """Pooling Layer"""
+
     def __init__(self, typename, filter_shape, strides, name_or_scope, padding='SAME'):
         if typename == 'max':
             super().__init__('max_pool')
@@ -156,7 +159,7 @@ class PoolLayer(Layer):
     def __call__(self, input, name=''):
         with tf.variable_scope(self.name_or_scope, reuse=True):
             super().__call__(input)
-            return self.pool_func(input, self._filter_shape, self.strides, self.padding, name=self.type+name)
+            return self.pool_func(input, self._filter_shape, self.strides, self.padding, name=self.type + name)
 
     def compile(self):
         return
@@ -176,7 +179,6 @@ class PoolLayer(Layer):
 
 
 class DropoutLayer(Layer):
-
     def __init__(self, keep_prob, name_or_scope):
         super().__init__('dropout')
         self.name_or_scope = name_or_scope
@@ -187,7 +189,7 @@ class DropoutLayer(Layer):
     def __call__(self, input, name=''):
         with tf.variable_scope(self.name_or_scope, reuse=True):
             super().__call__(input)
-            return tf.nn.dropout(input, self.keep_prob, name='dropout'+name)
+            return tf.nn.dropout(input, self.keep_prob, name='dropout' + name)
 
     def compile(self):
         return
@@ -204,7 +206,6 @@ class DropoutLayer(Layer):
 
 
 class FlattenLayer(Layer):
-
     def __init__(self, name_or_scope):
         super(FlattenLayer, self).__init__('flatten')
         self._output_shape = None
@@ -215,7 +216,7 @@ class FlattenLayer(Layer):
             super(FlattenLayer, self).__call__(input)
             shape = input.get_shape().as_list()
             shape0 = shape[0] if shape[0] is not None else -1
-            return tf.reshape(input, [shape0, shape[1] * shape[2] * shape[3]], name='flatten'+name)
+            return tf.reshape(input, [shape0, shape[1] * shape[2] * shape[3]], name='flatten' + name)
 
     def compile(self):
         return
@@ -224,7 +225,7 @@ class FlattenLayer(Layer):
     def output_shape(self):
         if self._output_shape is None:
             input_shape = self.prev.output_shape
-            self._output_shape = [input_shape[0]*input_shape[1]*input_shape[2]]
+            self._output_shape = [input_shape[0] * input_shape[1] * input_shape[2]]
         return self._output_shape
 
     @property
@@ -233,7 +234,6 @@ class FlattenLayer(Layer):
 
 
 class FullyConnectedLayer(Layer):
-
     def __init__(self, out_channels, name_or_scope, activation='linear', has_bias=True):
         super(FullyConnectedLayer, self).__init__('fully_connected')
         self.activation = get_activation(activation)
@@ -252,7 +252,7 @@ class FullyConnectedLayer(Layer):
             result = tf.matmul(input, self.weights)
             if self.has_bias:
                 result = result + self.bias
-            return tf.add(self.activation(result),0,name='activation'+name)
+            return tf.add(self.activation(result), 0, name='activation' + name)
 
     def compile(self):
         assert self.prev is not None
@@ -357,7 +357,7 @@ class ConvNet(SequentialNet, Classifier):
         # creating placeholder
         self.train_data_node = tf.placeholder(self.dtype, dshape)
         self.train_labels_node = tf.placeholder(Int, shape=(dshape[0],))
-        self.eval_data_node = tf.placeholder(self.dtype, shape=(None, dshape[1], dshape[2],dshape[3]))
+        self.eval_data_node = tf.placeholder(self.dtype, shape=(None, dshape[1], dshape[2], dshape[3]))
         self.eval_labels_node = tf.placeholder(Int, shape=(None,))
 
     def push_conv_layer(self, filter_size, out_channels, strides, padding='SAME', activation='linear', has_bias=True):
@@ -503,7 +503,7 @@ class ConvNet(SequentialNet, Classifier):
         :param test: flag determin whether to compile test node
         :return: None
         """
-        print('compiling '+ self.name_or_scope + ' model')
+        print('compiling ' + self.name_or_scope + ' model')
         with tf.variable_scope(self.name_or_scope):
             super(ConvNet, self).compile()
             # init input node
@@ -526,7 +526,7 @@ class ConvNet(SequentialNet, Classifier):
             # Computation node for evaluations
             if eval:
                 with tf.name_scope('eval'):
-                    self.eval_logits, self.eval_loss = self._cal_loss(self.eval_data_node,self.eval_labels_node,
+                    self.eval_logits, self.eval_loss = self._cal_loss(self.eval_data_node, self.eval_labels_node,
                                                                       False, 'regularized_loss')
                     # prediction
                     self.eval_prediction = tf.nn.softmax(self.eval_logits, name='prediction')
@@ -600,15 +600,13 @@ class ConvNet(SequentialNet, Classifier):
         with self.graph.as_default():
             epoch_loss = 0
             for step in range(total_step):
-                if (step+1) % batch_per_epoch == 0:
-                    epoch_loss = 0
                 # Get next train batch
                 feed_dict = self.feed_dict()
                 # Train one batch
                 _, local_loss = sess.run([self.optimizer_op, self.loss], feed_dict)
                 epoch_loss += local_loss
                 # Maybe print log
-                if (step+1) % (batch_per_epoch//10) == 0:
+                if (step + 1) % (batch_per_epoch // 10) == 0:
                     # test_step = tf.train.global_step(sess, self.global_step)
                     cur_epoch = step // batch_per_epoch
                     batch = (step % batch_per_epoch) + 1
@@ -617,16 +615,19 @@ class ConvNet(SequentialNet, Classifier):
                         lr = sess.run(self.learning_rate, feed_dict)
                     # local_loss = sess.run(self.loss, feed_dict)
                     msg = create_training_log_message(cur_epoch, batch, batch_per_epoch,
-                                                      float(epoch_loss/((step % batch_per_epoch) + 1)),
-                                                      lr, time.time()-step_time)
+                                                      float(epoch_loss / ((step % batch_per_epoch) + 1)),
+                                                      lr, time.time() - step_time)
                     step_time = time.time()
-                    if (step+1) % eval_frequency == 0:
+                    if (step + 1) % eval_frequency == 0:
                         # Do evaluation
                         loss, acc, acc5 = self.eval(sess, self.test_data, self.test_labels, batch_size)
                         add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
-                                                                          time.time()-epoch_time, eval_size)
+                                                   time.time() - epoch_time, eval_size)
                         epoch_time = time.time()
                     log_beautiful_print(msg)
+
+                if (step + 1) % batch_per_epoch == 0:
+                    epoch_loss = 0
 
                 self.on_one_batch(sess, step)
 
@@ -694,13 +695,12 @@ class ConvNet(SequentialNet, Classifier):
         """
         Save the trained model to disk
         :param sess: the running Session
-        :param step: current step
-        :param name: name of the model file
+        :param path: path
         :return: None
         """
         self.finalize()
         path = path if path is not None else os.path.join(self.logdir, 'model')
-            # name = self.name_or_scope + '/model'
+        # name = self.name_or_scope + '/model'
         if sess is None:
             sess = self.sess
         utils.before_save(path)
