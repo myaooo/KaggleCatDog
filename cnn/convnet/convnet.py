@@ -600,8 +600,6 @@ class ConvNet(SequentialNet, Classifier):
         with self.graph.as_default():
             epoch_loss = 0
             for step in range(total_step):
-                if (step+1) % batch_per_epoch == 0:
-                    epoch_loss = 0
                 # Get next train batch
                 feed_dict = self.feed_dict()
                 # Train one batch
@@ -617,7 +615,7 @@ class ConvNet(SequentialNet, Classifier):
                         lr = sess.run(self.learning_rate, feed_dict)
                     # local_loss = sess.run(self.loss, feed_dict)
                     msg = create_training_log_message(cur_epoch, batch, batch_per_epoch,
-                                                      float(epoch_loss/((step+1) % batch_per_epoch)),
+                                                      float(epoch_loss/((step % batch_per_epoch) +1)),
                                                       lr, time.time()-step_time)
                     step_time = time.time()
                     if (step+1) % eval_frequency == 0:
@@ -627,6 +625,9 @@ class ConvNet(SequentialNet, Classifier):
                                                                           time.time()-epoch_time, eval_size)
                         epoch_time = time.time()
                     log_beautiful_print(msg)
+
+                if (step+1) % batch_per_epoch == 0:
+                    epoch_loss = 0
 
                 self.on_one_batch(sess, step)
 
