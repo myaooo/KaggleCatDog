@@ -252,4 +252,5 @@ def generate_data(X, y, batch_size=32, train=True):
 
 
 if __name__ == '__main__':
-    train, train_labels = maybe_preprocess()
+    train, train_labels = maybe_preprocess()[0]
+    test, test_labels = maybe_preprocess(False)[0]
