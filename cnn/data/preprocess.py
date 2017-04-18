@@ -15,10 +15,10 @@ PREPROCESSED = os.path.join(DATA_ROOT, 'preprocessed/')
 TRAIN_DIR = os.path.join(PREPROCESSED, 'train/')
 TEST_DIR = os.path.join(PREPROCESSED, 'test/')
 
-IMG_SIZE = (64, 64)
+IMG_SIZE = (128, 128)
 CHANNELS = 3
 NUM_LABELS = 2
-BATCH_SIZE = 50
+BATCH_SIZE = 25
 
 SEED = None
 
