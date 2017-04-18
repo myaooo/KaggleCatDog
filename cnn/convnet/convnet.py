@@ -448,7 +448,7 @@ class ConvNet(SequentialNet, Classifier):
         if regularizer is not None:
             self.set_regularizer(regularizer, scale)
 
-    def set_optimizer(self, optimizer='Momentum', **kwargs):
+    def set_optimizer(self, optimizer='Momentum', *args, **kwargs):
         """
         Set the Optimizer function. See convnet.utils.get_optimizer
         :param optimizer: a string indicating the type of the optimizer
@@ -456,7 +456,7 @@ class ConvNet(SequentialNet, Classifier):
         :return: None
         """
         assert self.learning_rate is not None and self.learning_rate != 0
-        self.optimizer = get_optimizer(optimizer)(self.learning_rate, **kwargs)
+        self.optimizer = get_optimizer(optimizer)(self.learning_rate, *args, **kwargs)
 
     def set_learning_rate(self, learning_rate=0.001, update_func=None, **kwargs):
         """
