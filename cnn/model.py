@@ -11,7 +11,7 @@ print('I love you. #heart#')
 
 def build_model(train_data_generator, valid_data_generator):
     # LeNet-5 like Model
-    model = model2()
+    model = model4()
     model.set_data(train_data_generator, valid_data_generator)
     model.compile()
     return model
@@ -87,6 +87,30 @@ def model3():
     model.push_dropout_layer(0.7)
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
+    model.set_loss('sparse_softmax')
+    # model.set_regularizer('l2', 1e-5)
+    model.set_learning_rate(0.001)
+    model.set_optimizer('Adam')
+    return model
+
+
+def model4():
+    # test resnet
+    model = ConvNet('ResNet')
+    model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
+    model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='relu', has_bias=False)
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_layer([3, 3], 64, strides=[1, 1], activate_before_residual=False, activation='relu')
+    for i in range(5):
+        model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
+    model.push_res_layer([3, 3], 128, strides=[2, 2], activation='relu')
+    for i in range(5):
+        model.push_res_layer([3, 3], 128, strides=[1, 1], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 4), int(IMG_SIZE[1] / 4)],
+                          strides=[int(IMG_SIZE[0] / 4), int(IMG_SIZE[1] / 4)])
+    model.push_flatten_layer()
+    model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     # model.set_regularizer('l2', 1e-5)
     model.set_learning_rate(0.001)

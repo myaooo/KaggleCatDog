@@ -2,7 +2,8 @@
 A Doubly Linked List
 """
 
-class ListNode:
+
+class ListNode(object):
     def __init__(self, prev=None, next=None, data=None, container=None):
         self.prev = prev
         self.next = next
@@ -10,12 +11,18 @@ class ListNode:
         self.container = container
 
 
-class DoublyLinkedList:
+class DoublyLinkedList(object):
     def __init__(self, node=None):
         self.front = node
         self.back = node
         self.size = 0
         self.end = None
+
+    def __len__(self):
+        return self.size
+
+    def append(self, node):
+        self.push_back_node(node)
 
     def push_back_node(self, node):
         if self.size == 0:
