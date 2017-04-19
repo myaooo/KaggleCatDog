@@ -50,9 +50,9 @@ class InputLayer(Layer):
         # with tf.variable_scope(name, reuse=True) as scope:
         #     self.dshape = tf.constant(dshape, dtype=Int,name="dshape")
 
-    def __call__(self, input, name=''):
-        super().__call__(input)
-        return input
+    def __call__(self, input_, train=False, name=''):
+        super().__call__(input_)
+        return input_
 
     def compile(self):
         return
@@ -76,15 +76,21 @@ class ConvLayer(Layer):
                  has_bias=True):
         """
 
-        :param filter: of shape [m,n]
+        :param filter_size: of shape [m,n]
         :param out_channels:  output channel number, should be an integer
         :param strides: stride size, of shape [x,y]
+        :param name_or_scope:
         :param padding: 'VALID' or 'SAME'
+        :param activation:
+        :param has_bias:
         """
         super().__init__('conv')
         self._filter_shape = filter_size
         self._out_channels = out_channels
-        self.strides = [1] + strides + [1]
+        if len(strides) == 2:
+            strides = [1] + strides + [1]
+        assert len(strides) == 4
+        self.strides = strides
         self.padding = padding
         self.activation = get_activation(activation)
         self.has_bias = has_bias
@@ -96,13 +102,13 @@ class ConvLayer(Layer):
         self._is_compiled = False
         self._output_shape = None
 
-    def __call__(self, input, name=''):
+    def __call__(self, input_, train=True, name=''):
         with tf.variable_scope(self.name_or_scope, reuse=True):
-            super().__call__(input)
-            result = tf.nn.conv2d(input, self.filters, self.strides, self.padding, name='conv' + name)
+            super().__call__(input_)
+            results = tf.nn.conv2d(input_, self.filters, self.strides, self.padding, name='conv' + name)
             if self.has_bias:
-                result = result + self.bias
-            return self.activation(result, name='activate' + name)
+                results = results + self.bias
+            return self.activation(results)
 
     def compile(self):
         assert self.prev is not None
@@ -123,7 +129,7 @@ class ConvLayer(Layer):
                 self.bias = tf.get_variable('bias', shape=[out_channels], dtype=Float,
                                             initializer=tf.constant_initializer(0.01, dtype=Float),
                                             collections=bias_keys)
-            tf.summary.tensor_summary(tf.get_variable_scope().name + '_bias', self.bias)
+                tf.summary.tensor_summary(tf.get_variable_scope().name + '_bias', self.bias)
         self._is_compiled = True
 
     @property
@@ -150,16 +156,20 @@ class PoolLayer(Layer):
         elif typename == 'avg':
             super().__init__('avg_pool')
             self.pool_func = tf.nn.avg_pool
+        if len(filter_shape) == 2:
+            filter_shape = [1] + filter_shape + [1]
         self._filter_shape = filter_shape
         self._output_shape = None
-        self.strides = [1] + strides + [1]
+        if len(strides) == 2:
+            strides = [1] + strides + [1]
+        self.strides = strides
         self.padding = padding
         self.name_or_scope = name_or_scope
 
-    def __call__(self, input, name=''):
+    def __call__(self, input_, train=True, name=''):
         with tf.variable_scope(self.name_or_scope, reuse=True):
-            super().__call__(input)
-            return self.pool_func(input, self._filter_shape, self.strides, self.padding, name=self.type + name)
+            super().__call__(input_)
+            return self.pool_func(input_, self._filter_shape, self.strides, self.padding, name=self.type + name)
 
     def compile(self):
         return
@@ -186,10 +196,12 @@ class DropoutLayer(Layer):
             self.keep_prob = tf.constant(keep_prob, dtype=Float, name='keep_prob')
         self._output_shape = None
 
-    def __call__(self, input, name=''):
+    def __call__(self, input_, train=True, name=''):
+        if not train:
+            return input_
         with tf.variable_scope(self.name_or_scope, reuse=True):
-            super().__call__(input)
-            return tf.nn.dropout(input, self.keep_prob, name='dropout' + name)
+            super().__call__(input_)
+            return tf.nn.dropout(input_, self.keep_prob, name='dropout' + name)
 
     def compile(self):
         return
@@ -211,12 +223,12 @@ class FlattenLayer(Layer):
         self._output_shape = None
         self.name_or_scope = name_or_scope
 
-    def __call__(self, input, name=''):
+    def __call__(self, input_, train=True, name=''):
         with tf.variable_scope(self.name_or_scope, reuse=True):
-            super(FlattenLayer, self).__call__(input)
-            shape = input.get_shape().as_list()
+            super(FlattenLayer, self).__call__(input_)
+            shape = input_.get_shape().as_list()
             shape0 = shape[0] if shape[0] is not None else -1
-            return tf.reshape(input, [shape0, shape[1] * shape[2] * shape[3]], name='flatten' + name)
+            return tf.reshape(input_, [shape0, shape[1] * shape[2] * shape[3]], name='flatten' + name)
 
     def compile(self):
         return
@@ -226,6 +238,35 @@ class FlattenLayer(Layer):
         if self._output_shape is None:
             input_shape = self.prev.output_shape
             self._output_shape = [input_shape[0] * input_shape[1] * input_shape[2]]
+        return self._output_shape
+
+    @property
+    def is_compiled(self):
+        return True
+
+
+class PadLayer(Layer):
+    def __init__(self, paddings, name_or_scope):
+        super(PadLayer, self).__init__('pad')
+        self._output_shape = None
+        self.paddings = paddings
+        self.name_or_scope = name_or_scope
+
+    def __call__(self, input_, train=True, name=''):
+        with tf.variable_scope(self.name_or_scope, reuse=True):
+            super(PadLayer, self).__call__(input_)
+            return tf.pad(input_, self.paddings)
+
+    def compile(self):
+        return
+
+    @property
+    def output_shape(self):
+        if self._output_shape is None:
+            input_shape = self.prev.output_shape
+            self._output_shape = []
+            for i, shape in enumerate(input_shape):
+                self._output_shape.append(shape if shape is None else shape + sum(self.paddings[i]))
         return self._output_shape
 
     @property
@@ -246,10 +287,10 @@ class FullyConnectedLayer(Layer):
         self.weights = None
         self.bias = None
 
-    def __call__(self, input, name=''):
+    def __call__(self, input_, train=True, name=''):
         with tf.variable_scope(name_or_scope=self.name_or_scope, reuse=True):
-            super(FullyConnectedLayer, self).__call__(input)
-            result = tf.matmul(input, self.weights)
+            input_ = super(FullyConnectedLayer, self).__call__(input_)
+            result = tf.matmul(input_, self.weights)
             if self.has_bias:
                 result = result + self.bias
             return tf.add(self.activation(result), 0, name='activation' + name)
@@ -278,6 +319,109 @@ class FullyConnectedLayer(Layer):
     @property
     def output_shape(self):
         return [self._out_channels]
+
+    @property
+    def is_compiled(self):
+        return self._is_compiled
+
+
+class BatchNormLayer(Layer):
+    def __init__(self, name_or_scope, decay=0.99, epsilon=0.001, activation='linear'):
+        super(BatchNormLayer, self).__init__('batch_norm')
+        self._output_shape = None
+        self.name_or_scope = name_or_scope
+        self.decay = decay
+        self.epsilon = epsilon
+        self.activation = activation
+
+    def compile(self):
+        return True
+
+    @property
+    def output_shape(self):
+        if self._output_shape is None:
+            self._output_shape = self.prev.output_shape
+        return self._output_shape
+
+    def __call__(self, input_, train=True, name=''):
+        input_ = super(BatchNormLayer, self).__call__(input_)
+        reuse = self.n_calls != 0
+        with tf.variable_scope(self.name_or_scope, reuse=reuse):
+            return tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon,
+                                                is_training=train, reuse=reuse, scope='contrib_op',
+                                                activation_fn=get_activation(self.activation))
+
+    @property
+    def is_compiled(self):
+        return True
+
+
+class ResLayer(Layer):
+    def __init__(self, filter_size, out_channels, strides, name_or_scope, padding='SAME', activation='relu',
+                 activate_before_residual=True, decay=0.99, epsilon=0.001):
+        super(ResLayer, self).__init__('res')
+        self._filter_size = filter_size
+        self._out_channels = out_channels
+        self.strides = strides
+        self.padding = padding
+        self.activation = get_activation(activation)
+        self.activate_before_residual = activate_before_residual
+        self.decay = decay
+        self.epsilon = epsilon
+        self.filters = None
+        self.bias = None
+        self.shape = None
+        self.name_or_scope = name_or_scope
+        self._is_compiled = False
+        self._output_shape = None
+        self.net1 = SequentialNet(name_or_scope)
+        self.net2 = SequentialNet(name_or_scope+'_residue')
+        # self.net3 = SequentialNet(name_or_scope+'_add')
+
+    def __call__(self, input_, train=True, name=''):
+        assert self.is_compiled
+        with tf.variable_scope(self.name_or_scope):
+            results = self.net1(input_, train, 'pipe')
+            res = self.net2(input_, train, 'res')
+            return results + res
+            # return self.net3(results + res, 'add')
+
+    def compile(self):
+        input_shape = self.prev.output_shape
+        # Compute weight shapes
+        in_channels = input_shape[-1]
+        out_channels = self._out_channels
+        # self.shape = self._filter_size + [in_channels, out_channels]
+        assert len(self.net1) == 0
+        self.net1.append(InputLayer(dshape=[None] + input_shape))
+        self.net2.append(InputLayer(dshape=[None] + input_shape))
+        if self.activate_before_residual:
+            self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
+                                            epsilon=self.epsilon, activation=self.activation))
+        self.net1.append(ConvLayer(self._filter_size, out_channels, self.strides,
+                                   self.net1.name_or_scope + '_conv1', activation='linear',
+                                   has_bias=False))
+        self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn1', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
+        self.net1.append(ConvLayer(self._filter_size, out_channels, [1, 1],
+                                   self.net1.name_or_scope + '_conv2', activation='linear',
+                                   has_bias=False))
+        if in_channels != out_channels:
+            self.net2.append(PoolLayer('avg', self.strides, self.strides, self.net2.name_or_scope + '_avg'))
+            d_channels = out_channels - in_channels
+            self.net2.append(PadLayer([[0, 0], [0, 0], [0, 0], [d_channels//2, d_channels//2]],
+                                      self.net2.name_or_scope + '_pad'))
+        # self.net3.append(BatchNormLayer(self.net3.name_or_scope + '_bn2', decay=self.decay,
+        #                                 epsilon=self.epsilon, activation=self.activation))
+
+        for net in [self.net1, self.net2]:
+            net.compile()
+        self._is_compiled = True
+
+    @property
+    def output_shape(self):
+        assert len(self.net1) > 0 and self.net1.is_compiled
+        return self.net1.back.output_shape
 
     @property
     def is_compiled(self):
@@ -422,6 +566,18 @@ class ConvNet(SequentialNet, Classifier):
         # self.layers.append({"type":"dropout",'prob':prob})
         self.push_back(DropoutLayer(keep_prob, layer_name))
 
+    def push_batch_norm_layer(self, decay=0.99, epsilon=0.001, activation='linear'):
+        layer_name = 'batch_norm' + str(self.size)
+        self.layers.append(layer_name)
+        self.push_back(BatchNormLayer(layer_name, decay=decay, epsilon=epsilon, activation=activation))
+
+    def push_res_layer(self, filter_size, out_channels, strides, padding='SAME', activation='relu',
+                       activate_before_residual=True, decay=0.99, epsilon=0.001):
+        layer_name = 'res' + str(self.size)
+        self.layers.append(layer_name)
+        self.push_back(ResLayer(filter_size, out_channels, strides, layer_name, padding, activation=activation,
+                                activate_before_residual=activate_before_residual, decay=decay, epsilon=epsilon))
+
     def set_regularizer(self, regularizer=None, scale=0):
         """
         Set the loss regularizer. default to have no regularization
@@ -484,14 +640,13 @@ class ConvNet(SequentialNet, Classifier):
             assert test_data_generator.n % test_data_generator.batch_size == 0
         self.test_data_generator = test_data_generator
 
-    def _cal_loss(self, data_node, labels_node, train, name):
+    def _cal_loss(self, logits, labels_node, name):
         # logits: the raw output of the model
-        logits = self.model(data_node, train)
         # loss: average loss, computed by specified loss_func
         loss = tf.reduce_mean(self.loss_func(logits, labels_node))
         # add a regularized term, note that it is added after taking mean on loss value
         loss = tf.add(loss, self.regularized_term, name=name)
-        return logits, loss
+        return loss
 
     def compile(self, eval=True, test=False):
         """
@@ -512,8 +667,8 @@ class ConvNet(SequentialNet, Classifier):
             self.regularized_term = self.regularizer(tf.get_collection(tf.GraphKeys.WEIGHTS))
 
             # computation node for training ops
-            self.logits, self.loss = self._cal_loss(self.train_data_node, self.train_labels_node,
-                                                    True, 'regularized_loss')
+            self.logits = self.model(self.train_data_node, train=True)
+            self.loss = self._cal_loss(self.logits, self.train_labels_node, 'regularized_loss')
 
             tf.summary.scalar('loss', self.loss)
             with tf.name_scope('train'):
@@ -523,8 +678,8 @@ class ConvNet(SequentialNet, Classifier):
             # Computation node for evaluations
             if eval:
                 with tf.name_scope('eval'):
-                    self.eval_logits, self.eval_loss = self._cal_loss(self.eval_data_node, self.eval_labels_node,
-                                                                      False, 'regularized_loss')
+                    self.eval_logits = self.model(self.eval_data_node, train=False)
+                    self.eval_loss = self._cal_loss(self.eval_logits, self.eval_labels_node, 'regularized_loss')
                     # prediction
                     self.eval_prediction = tf.nn.softmax(self.eval_logits, name='prediction')
                     # accuracy
@@ -546,16 +701,8 @@ class ConvNet(SequentialNet, Classifier):
         # Note that {strides} is a 4D array whose
         # shape matches the data layout: [image index, y, x, depth].
 
-        if train:
-            return self.__call__(data, '_train')
-        else:  # In evaluation mode, dropout layer is not called
-            cur = self.front
-            result = data
-            while cur != self.end:
-                if cur.type != 'dropout':
-                    result = cur(result, '_eval')
-                cur = cur.next
-            return result
+        name = '_train' if train else '_eval'
+        return self.__call__(data, train, name)
 
     def feed_dict(self):
         """
