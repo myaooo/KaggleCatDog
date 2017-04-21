@@ -345,8 +345,6 @@ class BatchNormLayer(Layer):
         return self._output_shape
 
     def __call__(self, input_, train=True, name=''):
-        # reuse = True if self.n_calls != 0 else None
-        # super(BatchNormLayer, self).__call__(input_)
         with tf.variable_scope(self.name_or_scope):
             results = tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon,
                                                    is_training=train, reuse=True, scope='bn_op')
@@ -672,9 +670,11 @@ class ConvNet(SequentialNet, Classifier):
             self.loss = self._cal_loss(self.logits, self.train_labels_node, 'regularized_loss')
 
             tf.summary.scalar('loss', self.loss)
-            with tf.name_scope('train'):
-                # Setup optimizer ops
-                self.optimizer_op = self.optimizer.minimize(self.loss, self.global_step)
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                with tf.name_scope('train'):
+                    # Setup optimizer ops
+                    self.optimizer_op = self.optimizer.minimize(self.loss, self.global_step)
 
             # Computation node for evaluations
             if eval:

@@ -15,7 +15,7 @@ def main(_):
     FLAGS.max_steps = 20000
     FLAGS.fine_tune = True
     FLAGS.subset = 'train'
-    FLAGS.initial_learning_rate = 0.05
+    FLAGS.initial_learning_rate = 0.02
     FLAGS.num_epochs_per_decay = 5
     FLAGS.learning_rate_decay_factor = 0.9
     dataset = CatDogData(subset=FLAGS.subset)
