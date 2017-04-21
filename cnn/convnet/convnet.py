@@ -344,12 +344,16 @@ class BatchNormLayer(Layer):
         return self._output_shape
 
     def __call__(self, input_, train=True, name=''):
-        input_ = super(BatchNormLayer, self).__call__(input_)
-        reuse = self.n_calls != 0
-        with tf.variable_scope(self.name_or_scope, reuse=reuse):
-            return tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon,
-                                                is_training=train, reuse=reuse, scope='contrib_op',
-                                                activation_fn=get_activation(self.activation))
+        with tf.variable_scope(self.name_or_scope):
+            results = tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon,
+                                                   is_training=train, reuse=True, scope='bn_op')
+            return get_activation(self.activation)(results)
+        #reuse = True if self.n_calls != 0 else None
+        # super(BatchNormLayer, self).__call__(input_)
+        # with tf.variable_scope(self.name_or_scope):
+            # results = tf.layers.batch_normalization(input_, momentum=self.decay, epsilon=self.epsilon,
+              #                                      training=train, reuse=reuse, name='contrib_op')
+            # return get_activation(self.activation)(results)
 
     @property
     def is_compiled(self):
