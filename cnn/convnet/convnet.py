@@ -333,6 +333,7 @@ class BatchNormLayer(Layer):
         self.decay = decay
         self.epsilon = epsilon
         self.activation = activation
+        self.mode = None
 
     def compile(self):
         return True
@@ -344,12 +345,12 @@ class BatchNormLayer(Layer):
         return self._output_shape
 
     def __call__(self, input_, train=True, name=''):
-        input_ = super(BatchNormLayer, self).__call__(input_)
-        reuse = self.n_calls != 0
-        with tf.variable_scope(self.name_or_scope, reuse=reuse):
-            return tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon,
-                                                is_training=train, reuse=reuse, scope='contrib_op',
-                                                activation_fn=get_activation(self.activation))
+        # reuse = True if self.n_calls != 0 else None
+        # super(BatchNormLayer, self).__call__(input_)
+        with tf.variable_scope(self.name_or_scope):
+            results = tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon,
+                                                   is_training=train, reuse=True, scope='bn_op')
+            return get_activation(self.activation)(results)
 
     @property
     def is_compiled(self):

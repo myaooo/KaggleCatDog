@@ -53,11 +53,13 @@ class ConvRecorder:
             if isinstance(layer, cnet.ConvLayer):
                 with tf.variable_scope(layer.scope_name):
                     self.add_tensor_summary('filters', layer.filters)
-                    self.add_tensor_summary('bias', layer.bias)
+                    if layer.bias is not None:
+                        self.add_tensor_summary('bias', layer.bias)
             elif isinstance(layer, cnet.FullyConnectedLayer):
                 with tf.variable_scope(layer.scope_name):
                     self.add_tensor_summary('filters', layer.weights)
-                    self.add_tensor_summary('bias', layer.bias)
+                    if layer.bias is not None:
+                        self.add_tensor_summary('bias', layer.bias)
             layer = layer.next
         self.summary = tf.summary.merge(self.summary_list)
         convnet.after_one_batch(self)

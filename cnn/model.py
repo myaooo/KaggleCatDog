@@ -98,18 +98,23 @@ def model4():
     # test resnet
     model = ConvNet('ResNet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
-    model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='relu', has_bias=False)
+    model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     model.push_res_layer([3, 3], 64, strides=[1, 1], activate_before_residual=False, activation='relu')
-    for i in range(5):
+    for i in range(3):
         model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
     model.push_res_layer([3, 3], 128, strides=[2, 2], activation='relu')
-    for i in range(5):
+    for i in range(3):
         model.push_res_layer([3, 3], 128, strides=[1, 1], activation='relu')
-    model.push_batch_norm_layer(activation='relu')
+    model.push_res_layer([3, 3], 256, strides=[2, 2], activation='relu')
+    for i in range(2):
+        model.push_res_layer([3, 3], 256, strides=[1, 1], activation='relu')
+    # model.push_res_layer([3, 3], 256, strides=[1, 1], activation='linear')
+    # model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 4), int(IMG_SIZE[1] / 4)],
                           strides=[int(IMG_SIZE[0] / 4), int(IMG_SIZE[1] / 4)])
     model.push_flatten_layer()
+    model.push_fully_connected_layer(512, activation='linear', has_bias=True)
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     # model.set_regularizer('l2', 1e-5)
