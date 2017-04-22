@@ -35,6 +35,7 @@ weight_keys = global_keys + [tf.GraphKeys.WEIGHTS]
 bias_keys = global_keys + [tf.GraphKeys.BIASES]
 l_weight_keys = local_keys + [tf.GraphKeys.WEIGHTS]
 l_bias_keys = local_keys + [tf.GraphKeys.BIASES]
+save_keys = [tf.GraphKeys.TRAINABLE_VARIABLES, tf.GraphKeys.LOCAL_VARIABLES]
 
 
 class InputLayer(Layer):
@@ -347,7 +348,8 @@ class BatchNormLayer(Layer):
     def __call__(self, input_, train=True, name=''):
         with tf.variable_scope(self.name_or_scope):
             results = tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon,
-                                                   is_training=train, reuse=True, scope='bn_op')
+                                                   is_training=train, reuse=True, scope='bn_op',
+                                                   variables_collections=local_keys)
             return get_activation(self.activation)(results)
 
     @property
@@ -915,7 +917,10 @@ class ConvNet(SequentialNet, Classifier):
             return False
         with self.graph.as_default():
             self._init_op = tf.global_variables_initializer()
-            self._saver = tf.train.Saver(tf.trainable_variables())
+            variables = []
+            for key in save_keys:
+                variables += tf.get_collection(key)
+            self._saver = tf.train.Saver(variables)
         self.finalized = True
         # self.graph.finalize()
         # self.supervisor = tf.train.Supervisor(self.graph, logdir=self.logdir)
