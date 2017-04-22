@@ -30,13 +30,15 @@ def model1():
     # LeNet-5 like Model
     model = ConvNet('lenet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
-    model.push_conv_layer(filter_size=[5, 5], out_channels=32, strides=[1, 1], activation='relu')
+    model.push_conv_layer(filter_size=[5, 5], out_channels=32, strides=[1, 1], activation='linear')
+    model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('max', kernel_size=[1, 2, 2, 1], strides=[2, 2])
-    model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='relu')
+    model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='linear')
+    model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('max', kernel_size=[1, 2, 2, 1], strides=[2, 2])
     model.push_flatten_layer()
-    model.push_fully_connected_layer(out_channels=128, activation='relu')
-    model.push_dropout_layer(0.5)
+    model.push_fully_connected_layer(out_channels=128, activation='linear')
+    model.push_batch_norm_layer(activation='relu')
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
@@ -106,7 +108,7 @@ def model3():
 
 def model3b():
     # Network in Network
-    model = ConvNet('NIN2')
+    model = ConvNet('NIN-test')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear')
     model.push_batch_norm_layer(activation='relu')
@@ -132,8 +134,8 @@ def model3b():
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
-    # model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.001)
+    model.set_regularizer('l2', 1e-5)
+    model.set_learning_rate(0.002)
     model.set_optimizer('Adam')
     return model
 
