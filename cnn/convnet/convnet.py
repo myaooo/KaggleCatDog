@@ -854,8 +854,10 @@ class ConvNet(SequentialNet, Classifier):
                 data, _ = data_generator.next()
                 prediction = sess.run(self.eval_prediction, feed_dict={self.eval_data_node: data})
                 predictions.append(prediction)
-            predictions = np.hstack(predictions)
-            assert len(predictions) == data_generator.n
+            predictions = np.vstack(predictions)
+            assert_str = 'predictions shape: ' + str(predictions.shape) + 'data_generator.n: ' + str(data_generator.n)
+
+            assert len(predictions) == data_generator.n, assert_str
             return predictions
 
     @property

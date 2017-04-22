@@ -112,6 +112,7 @@ def maybe_preprocess(train=True, ratio=None):
         raw_dir = RAW_TEST_DIR
         target_dir = TEST_DIR
         dirs = sort_by_name(os.listdir(raw_dir))
+        print(dirs)
     print("Preprocessing {:s} data...".format('train' if train else 'test'))
 
     paths = [target_dir + i for i in dirs]
@@ -248,7 +249,7 @@ def generate_data(X, y, batch_size=32, train=True):
         datagen = ImageDataGenerator()
     data_generator = datagen.flow(
         X, y,
-        batch_size=batch_size)
+        batch_size=batch_size, shuffle=train)
     return data_generator
 
 
