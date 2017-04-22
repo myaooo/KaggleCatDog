@@ -187,7 +187,8 @@ def prep_data(valid_ratio=0.2, test=False):
     test_data = None
     if test:
         test_file = os.path.join(DATA_ROOT, 'tmp/test.pkl')
-        test_data, _ = maybe_calculate(test_file, maybe_preprocess, False)[0]
+        test_data = maybe_calculate(test_file, maybe_preprocess, False)[0]
+        test_data = generate_data(test_data[0], test_data[1], BATCH_SIZE, False)
 
     return train, valid, test_data
 
