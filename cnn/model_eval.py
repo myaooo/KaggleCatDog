@@ -9,7 +9,7 @@ EVAL_FREQUENCY = 1
 
 
 def main():
-    init_tf_environ(gpu_num=0)
+    init_tf_environ(gpu_num=1)
     all_data = prep_data(test=True)
     model = build_model(*all_data[:2])
     model.restore()

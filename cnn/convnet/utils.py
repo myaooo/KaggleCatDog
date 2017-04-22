@@ -85,7 +85,7 @@ def get_learning_rate(update_func, **kwargs):
         kwargs['x'] = kwargs.pop('global_step')
         kwargs.pop('decay_steps')
         kwargs.pop('learning_rate')
-    if update_func in __str2loss_func:
+    if update_func in __str2learning_rate:
         return __str2learning_rate[update_func](**kwargs)
     print('No matching learning rate decay scheme found. Using constant scalar learning rate.\n')
     return kwargs['learning_rate']

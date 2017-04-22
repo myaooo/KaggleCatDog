@@ -9,8 +9,10 @@ FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_integer('model', 3,
                             """The number of model as defined in the script""")
+tf.app.flags.DEFINE_integer('epoch', 30,
+                            """The number of epochs to run""")
 
-num_epochs = 45
+# num_epochs = 45
 EVAL_FREQUENCY = 1
 
 print('I love you. #heart#')
@@ -168,23 +170,26 @@ def model5():
     model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     model.push_res_layer([3, 3], 64, strides=[1, 1], activate_before_residual=False, activation='relu')
-    for i in range(3):
+    for i in range(4):
         model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
     model.push_res_layer([3, 3], 128, strides=[2, 2], activation='relu')
-    for i in range(3):
+    for i in range(4):
         model.push_res_layer([3, 3], 128, strides=[1, 1], activation='relu')
     model.push_res_layer([3, 3], 256, strides=[2, 2], activation='relu')
     for i in range(2):
         model.push_res_layer([3, 3], 256, strides=[1, 1], activation='relu')
     # model.push_batch_norm_layer(activation='relu')
-    model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 8), int(IMG_SIZE[1] / 8)],
-                          strides=[int(IMG_SIZE[0] / 8), int(IMG_SIZE[1] / 8)])
+    model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 4), int(IMG_SIZE[1] / 4)],
+                          strides=[int(IMG_SIZE[0] / 4), int(IMG_SIZE[1] / 4)])
     model.push_flatten_layer()
+    # model.push_fully_connected_layer(512, activation='linear', has_bias=True)
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.2, 'exponential', decay_rate=0.9)
+    model.set_learning_rate(0.01, 'exponential', decay_rate=0.9)
     model.set_optimizer('Momentum', momentum=0.9)
+    # model.set_learning_rate(0.001)
+    # model.set_optimizer('Adam')
     return model
 
 def main():
@@ -192,7 +197,7 @@ def main():
     all_data = prep_data(test=False)
     model = build_model(*all_data[:2])
     # rec = ConvRecorder(model, get_path('models', 'lenet/train'))
-    model.train(BATCH_SIZE, num_epochs, EVAL_FREQUENCY)
+    model.train(BATCH_SIZE, FLAGS.epoch, EVAL_FREQUENCY)
     model.save()
 
 
