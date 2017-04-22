@@ -567,13 +567,13 @@ class ConvNet(SequentialNet, Classifier):
         # self.layers.append({"type":"dropout",'prob':prob})
         self.push_back(DropoutLayer(keep_prob, layer_name))
 
-    def push_batch_norm_layer(self, decay=0.99, epsilon=0.001, activation='linear'):
+    def push_batch_norm_layer(self, decay=0.9, epsilon=0.001, activation='linear'):
         layer_name = 'batch_norm' + str(self.size)
         self.layers.append(layer_name)
         self.push_back(BatchNormLayer(layer_name, decay=decay, epsilon=epsilon, activation=activation))
 
     def push_res_layer(self, filter_size, out_channels, strides, padding='SAME', activation='relu',
-                       activate_before_residual=True, decay=0.99, epsilon=0.001):
+                       activate_before_residual=True, decay=0.9, epsilon=0.001):
         layer_name = 'res' + str(self.size)
         self.layers.append(layer_name)
         self.push_back(ResLayer(filter_size, out_channels, strides, layer_name, padding, activation=activation,
@@ -856,8 +856,10 @@ class ConvNet(SequentialNet, Classifier):
                 data, _ = data_generator.next()
                 prediction = sess.run(self.eval_prediction, feed_dict={self.eval_data_node: data})
                 predictions.append(prediction)
-            predictions = np.hstack(predictions)
-            assert len(predictions) == data_generator.n
+            predictions = np.vstack(predictions)
+            assert_str = 'predictions shape: ' + str(predictions.shape) + 'data_generator.n: ' + str(data_generator.n)
+
+            assert len(predictions) == data_generator.n, assert_str
             return predictions
 
     @property
