@@ -12,6 +12,9 @@ tf.app.flags.DEFINE_integer('model', 3,
 tf.app.flags.DEFINE_integer('epoch', 30,
                             """The number of epochs to run""")
 
+tf.app.flags.DEFINE_string('name', '',
+                           """The name of the model""")
+
 # num_epochs = 45
 EVAL_FREQUENCY = 1
 
@@ -28,7 +31,7 @@ def build_model(train_data_generator, valid_data_generator):
 
 def model1():
     # LeNet-5 like Model
-    model = ConvNet('lenet')
+    model = ConvNet(FLAGS.name or 'lenet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[5, 5], out_channels=32, strides=[1, 1], activation='linear')
     model.push_batch_norm_layer(activation='relu')
@@ -49,7 +52,7 @@ def model1():
 
 
 def model2():
-    model = ConvNet('lenet2')
+    model = ConvNet(FLAGS.name or 'lenet2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='relu')
     model.push_pool_layer('max', kernel_size=[1, 2, 2, 1], strides=[2, 2])
@@ -78,7 +81,7 @@ def model2():
 
 def model3():
     # Network in Network
-    model = ConvNet('NIN')
+    model = ConvNet(FLAGS.name or 'NIN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='relu')
     model.push_conv_layer(filter_size=[1, 1], out_channels=64, strides=[1, 1], activation='relu')
@@ -108,7 +111,7 @@ def model3():
 
 def model3b():
     # Network in Network
-    model = ConvNet('NIN-test')
+    model = ConvNet(FLAGS.name or 'NIN-test')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='linear')
     model.push_batch_norm_layer(activation='relu')
@@ -142,7 +145,7 @@ def model3b():
 
 def model4():
     # test resnet
-    model = ConvNet('ResNet')
+    model = ConvNet(FLAGS.name or 'ResNet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[2, 2], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
@@ -172,7 +175,7 @@ def model4():
 
 def model5():
     # test resnet
-    model = ConvNet('ResNet2')
+    model = ConvNet(FLAGS.name or 'ResNet2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[2, 2], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
@@ -198,6 +201,7 @@ def model5():
     # model.set_learning_rate(0.001)
     # model.set_optimizer('Adam')
     return model
+
 
 def main():
     init_tf_environ(gpu_num=1)
