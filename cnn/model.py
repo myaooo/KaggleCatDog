@@ -168,7 +168,7 @@ def model4():
     model.set_regularizer('l2', 1e-5)
     # model.set_learning_rate(0.02, 'exponential', decay_rate=0.95)
     # model.set_optimizer('Momentum', momentum=0.9)
-    model.set_learning_rate(0.0003) # 0.001
+    model.set_learning_rate(0.0002) # 0.0005
     model.set_optimizer('Adam')
     return model
 
