@@ -15,6 +15,9 @@ tf.app.flags.DEFINE_integer('epoch', 30,
 tf.app.flags.DEFINE_string('name', '',
                            """The name of the model""")
 
+tf.app.flags.DEFINE_string('train', '',
+                           """set 'all' if you want to use all the training data""")
+
 # num_epochs = 45
 EVAL_FREQUENCY = 1
 
@@ -235,7 +238,7 @@ def model6():
 
 def main():
     init_tf_environ(gpu_num=1)
-    all_data = prep_data(test=False)
+    all_data = prep_data(test=False, all=FLAGS.train == 'all')
     model = build_model(*all_data[:2])
     # rec = ConvRecorder(model, get_path('models', 'lenet/train'))
     model.train(BATCH_SIZE, FLAGS.epoch, EVAL_FREQUENCY)
