@@ -179,12 +179,17 @@ def maybe_calculate(filename, cal_fn, *args, **kwargs):
     return results
 
 
-def prep_data(valid_ratio=0.2, test=False):
+def prep_data(valid_ratio=0.2, test=False, all=False):
     assert 0 < valid_ratio < 1
     train_file = os.path.join(DATA_ROOT, 'tmp/train.pkl')
     train, valid = maybe_calculate(train_file, maybe_preprocess, True, valid_ratio)
-    train = generate_data(train[0], train[1], BATCH_SIZE, True)
-    valid = generate_data(valid[0], valid[1], BATCH_SIZE, False)
+    train_data, train_labels = train
+    valid_data, valid_labels = valid
+    if all:
+        train_data = np.vstack([train_data, valid_data])
+        train_labels = np.hstack([train_labels, valid_labels])
+    train = generate_data(train_data, train_labels, BATCH_SIZE, True)
+    valid = generate_data(valid_data, valid_labels, BATCH_SIZE, False)
     test_data = None
     if test:
         test_file = os.path.join(DATA_ROOT, 'tmp/test.pkl')
@@ -254,5 +259,5 @@ def generate_data(X, y, batch_size=32, train=True):
 
 
 if __name__ == '__main__':
-    train, train_labels = maybe_preprocess()[0]
-    test, test_labels = maybe_preprocess(False)[0]
+    maybe_preprocess()
+    maybe_preprocess(False)
