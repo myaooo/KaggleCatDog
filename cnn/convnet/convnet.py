@@ -122,8 +122,9 @@ class ConvLayer(Layer):
         # Initialize Variables
         with tf.variable_scope(name_or_scope=self.name_or_scope) as scope:
             self.scope_name = scope.name
+            n = self.shape[0] * self.shape[1] * out_channels
             self.filters = tf.get_variable('filters', shape=self.shape, dtype=Float,
-                                           initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=Float),
+                                           initializer=tf.random_normal_initializer(stddev=np.sqrt(2.0/n), dtype=Float),
                                            collections=weight_keys)
             tf.summary.tensor_summary(tf.get_variable_scope().name + '_filters', self.filters)
             if self.has_bias:
@@ -307,7 +308,7 @@ class FullyConnectedLayer(Layer):
         with tf.variable_scope(name_or_scope=self.name_or_scope) as scope:
             self.scope_name = scope.name
             self.weights = tf.get_variable('weights', shape=self.shape, dtype=Float,
-                                           initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=Float),
+                                           initializer=tf.uniform_unit_scaling_initializer(factor=1.0, dtype=Float),
                                            collections=weight_keys)
             tf.summary.tensor_summary(tf.get_variable_scope().name + '_weights', self.weights)
             if self.has_bias:
