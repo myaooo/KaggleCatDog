@@ -863,16 +863,20 @@ class ConvNet(SequentialNet, Classifier):
             return self.infer_in_batches(sess, data, batch_size)
         else:
             predictions = []
+            logits = []
             # batch_num = math.ceil(data_generator.n / data_generator.batch_size)
             for i in range(0, data_generator.n, data_generator.batch_size):
                 data, _ = data_generator.next()
-                prediction = sess.run(self.eval_prediction, feed_dict={self.eval_data_node: data})
+                logit, prediction = sess.run([self.eval_logits, self.eval_prediction],
+                                             feed_dict={self.eval_data_node: data})
                 predictions.append(prediction)
+                logits.append(logit)
             predictions = np.vstack(predictions)
+            logits = np.vstack(logits)
             assert_str = 'predictions shape: ' + str(predictions.shape) + 'data_generator.n: ' + str(data_generator.n)
 
             assert len(predictions) == data_generator.n, assert_str
-            return predictions
+            return logits, predictions
 
     @property
     def logdir(self):

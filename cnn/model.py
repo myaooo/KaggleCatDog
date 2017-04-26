@@ -24,17 +24,17 @@ EVAL_FREQUENCY = 1
 print('I love you. #heart#')
 
 
-def build_model(train_data_generator, valid_data_generator):
+def build_model(model_no, name, train_data_generator, valid_data_generator):
     models = [model1, model2, model3b, model4, model5, model6]
-    model = models[FLAGS.model - 1]()
+    model = models[model_no - 1](name)
     model.set_data(train_data_generator, valid_data_generator)
     model.compile()
     return model
 
 
-def model1():
+def model1(name=''):
     # LeNet-5 like Model
-    model = ConvNet(FLAGS.name or 'lenet')
+    model = ConvNet(name or 'lenet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[5, 5], out_channels=32, strides=[1, 1], activation='linear')
     model.push_batch_norm_layer(activation='relu')
@@ -54,8 +54,8 @@ def model1():
     return model
 
 
-def model2():
-    model = ConvNet(FLAGS.name or 'lenet2')
+def model2(name=''):
+    model = ConvNet(name or 'lenet2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='relu')
     model.push_pool_layer('max', kernel_size=[1, 2, 2, 1], strides=[2, 2])
@@ -82,9 +82,9 @@ def model2():
     return model
 
 
-def model3():
+def model3(name=''):
     # Network in Network
-    model = ConvNet(FLAGS.name or 'NIN')
+    model = ConvNet(name or 'NIN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='relu')
     model.push_conv_layer(filter_size=[1, 1], out_channels=64, strides=[1, 1], activation='relu')
@@ -112,9 +112,9 @@ def model3():
     return model
 
 
-def model3b():
+def model3b(name=''):
     # Network in Network
-    model = ConvNet(FLAGS.name or 'NIN-test')
+    model = ConvNet(name or 'NIN-test')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='linear')
     model.push_batch_norm_layer(activation='relu')
@@ -146,9 +146,9 @@ def model3b():
     return model
 
 
-def model4():
+def model4(name=''):
     # test resnet
-    model = ConvNet(FLAGS.name or 'ResNet')
+    model = ConvNet(name or 'ResNet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[2, 2], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
@@ -176,9 +176,9 @@ def model4():
     return model
 
 
-def model5():
+def model5(name=''):
     # test resnet
-    model = ConvNet(FLAGS.name or 'ResNet2')
+    model = ConvNet(name or 'ResNet2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
@@ -208,9 +208,9 @@ def model5():
     return model
 
 
-def model6():
+def model6(name=''):
     # test resnet
-    model = ConvNet(FLAGS.name or 'ResNet2')
+    model = ConvNet(name or 'ResNet2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
@@ -246,7 +246,7 @@ def model6():
 def main():
     init_tf_environ(gpu_num=1)
     all_data = prep_data(test=False, all=FLAGS.train == 'all')
-    model = build_model(*all_data[:2])
+    model = build_model(FLAGS.model, FLAGS.name, *all_data[:2])
     # rec = ConvRecorder(model, get_path('models', 'lenet/train'))
     model.train(BATCH_SIZE, FLAGS.epoch, EVAL_FREQUENCY)
     model.save()
