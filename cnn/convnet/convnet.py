@@ -348,7 +348,7 @@ class BatchNormLayer(Layer):
 
     def __call__(self, input_, train=True, name=''):
         with tf.variable_scope(self.name_or_scope):
-            results = tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon,
+            results = tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon, scale=True,
                                                    is_training=train, reuse=True, scope='bn_op',
                                                    variables_collections=local_keys)
             return get_activation(self.activation)(results)
@@ -385,7 +385,7 @@ class ResLayer(Layer):
         with tf.variable_scope(self.name_or_scope):
             results = self.net1(input_, train, 'pipe')
             res = self.net2(input_, train, 'res')
-            return results + res
+            return self.activation(results + res)
             # return self.net3(results + res, 'add')
 
     def compile(self):
@@ -397,22 +397,33 @@ class ResLayer(Layer):
         assert len(self.net1) == 0
         self.net1.append(InputLayer(dshape=[None] + input_shape))
         self.net2.append(InputLayer(dshape=[None] + input_shape))
-        if self.activate_before_residual:
-            self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
-                                            epsilon=self.epsilon, activation=self.activation))
+        # if self.activate_before_residual:
+        #     self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
+        #                                     epsilon=self.epsilon, activation=self.activation))
         self.net1.append(ConvLayer(self._filter_size, out_channels, self.strides,
                                    self.net1.name_or_scope + '_conv1', activation='linear',
                                    has_bias=False))
         self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn1', decay=self.decay,
                                         epsilon=self.epsilon, activation=self.activation))
-        self.net1.append(ConvLayer(self._filter_size, out_channels, [1, 1],
+        self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
                                    self.net1.name_or_scope + '_conv2', activation='linear',
                                    has_bias=False))
+        self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn2', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
+        self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
+                                   self.net1.name_or_scope + '_conv3', activation='linear',
+                                   has_bias=False))
+        self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn3', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
         if in_channels != out_channels:
-            self.net2.append(PoolLayer('avg', self.strides, self.strides, self.net2.name_or_scope + '_avg'))
-            d_channels = out_channels - in_channels
-            self.net2.append(PadLayer([[0, 0], [0, 0], [0, 0], [d_channels//2, d_channels//2]],
-                                      self.net2.name_or_scope + '_pad'))
+            # self.net2.append(PoolLayer('avg', self.strides, self.strides, self.net2.name_or_scope + '_avg'))
+            # d_channels = out_channels - in_channels
+            # self.net2.append(PadLayer([[0, 0], [0, 0], [0, 0], [d_channels//2, d_channels//2]],
+            #                           self.net2.name_or_scope + '_pad'))
+            self.net2.append(ConvLayer(self.strides, out_channels, self.strides,
+                                       self.net2.name_or_scope + 'shortcut'))
+            self.net2.append(BatchNormLayer(self.net2.name_or_scope + 'bn', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
         # self.net3.append(BatchNormLayer(self.net3.name_or_scope + '_bn2', decay=self.decay,
         #                                 epsilon=self.epsilon, activation=self.activation))
 
@@ -624,7 +635,7 @@ class ConvNet(SequentialNet, Classifier):
         if update_func is None:
             self.learning_rate = learning_rate
         else:
-            kwargs['global_step'] = self.global_step * self.batch_size_node
+            kwargs['global_step'] = self.global_step  # * self.batch_size_node
             kwargs['learning_rate'] = learning_rate
             kwargs['decay_steps'] = self.train_size_node
             self.learning_rate = get_learning_rate(update_func, **kwargs)
