@@ -65,8 +65,8 @@ def ensemble_eval(data_generator, models):
 def main():
     init_tf_environ(gpu_num=1)
     all_data = prep_data(test=True)
-    models = FLAGS.models
-    names = FLAGS.names
+    models = FLAGS.models.split(',')
+    names = FLAGS.names.split(',')
     dataset = FLAGS.dataset
     cnns = []
     for model, name in zip(models, names):
