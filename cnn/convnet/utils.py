@@ -16,7 +16,10 @@ base_dir = os.path.abspath(os.path.join(__file__, '../../../'))
 __str2activation = {
     'linear': lambda x: x,
     'relu': tf.nn.relu,
-    'relu6': tf.nn.relu6
+    'relu6': tf.nn.relu6,
+    'elu': tf.nn.elu,
+    'tan': tf.tanh,
+    'sigmoid': tf.sigmoid
 }
 
 __str2loss_func = {

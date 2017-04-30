@@ -385,7 +385,8 @@ class ResLayer(Layer):
         with tf.variable_scope(self.name_or_scope):
             results = self.net1(input_, train, 'pipe')
             res = self.net2(input_, train, 'res')
-            return self.activation(results + res)
+            return res + results
+            # return self.activation(results + res)
             # return self.net3(results + res, 'add')
 
     def compile(self):
@@ -397,24 +398,23 @@ class ResLayer(Layer):
         assert len(self.net1) == 0
         self.net1.append(InputLayer(dshape=[None] + input_shape))
         self.net2.append(InputLayer(dshape=[None] + input_shape))
-        # if self.activate_before_residual:
-        #     self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
-        #                                     epsilon=self.epsilon, activation=self.activation))
+        self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
         self.net1.append(ConvLayer(self._filter_size, out_channels, self.strides,
                                    self.net1.name_or_scope + '_conv1', activation='linear',
                                    has_bias=False))
         self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn1', decay=self.decay,
                                         epsilon=self.epsilon, activation=self.activation))
-        self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
+        self.net1.append(ConvLayer(self._filter_size, out_channels, [1, 1],
                                    self.net1.name_or_scope + '_conv2', activation='linear',
                                    has_bias=False))
-        self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn2', decay=self.decay,
-                                        epsilon=self.epsilon, activation=self.activation))
-        self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
-                                   self.net1.name_or_scope + '_conv3', activation='linear',
-                                   has_bias=False))
-        self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn3', decay=self.decay,
-                                        epsilon=self.epsilon, activation=self.activation))
+        # self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn2', decay=self.decay,
+        #                                 epsilon=self.epsilon, activation=self.activation))
+        # self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
+        #                            self.net1.name_or_scope + '_conv3', activation='linear',
+        #                            has_bias=False))
+        # self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn3', decay=self.decay,
+        #                                 epsilon=self.epsilon, activation=self.activation))
         if in_channels != out_channels:
             # self.net2.append(PoolLayer('avg', self.strides, self.strides, self.net2.name_or_scope + '_avg'))
             # d_channels = out_channels - in_channels
@@ -481,23 +481,25 @@ class ConvNet(SequentialNet, Classifier):
         self.acc = None
         self.acc5 = None
 
+        self.graph = tf.Graph()
         # Optimization node
         self.optimizer_op = None
-        self.optimizer = tf.train.MomentumOptimizer  # Default to use Momentum
+        self.optimizer = None  # Default to use Momentum
         # Either a scalar (constant) or a Tensor (variable) that holds the learning rate
         self.learning_rate = None
         # A Tensor that tracks global step
-        self.global_step = tf.Variable(0, dtype=Int, name='global_step', trainable=False)
-        # A Tensor that holds current epoch
-        self.batch_size_node = tf.placeholder(dtype=Int, shape=(), name='batch_size')
-        self.train_size_node = tf.placeholder(dtype=Int, shape=(), name='train_size')
-        self.lr_feed_dict = {}
-        self.cur_epoch = tf.Variable(0, dtype=Float, name='cur_epoch', trainable=False)
+        with self.graph.as_default():
+            self.global_step = tf.Variable(0, dtype=Int, name='global_step', trainable=False)
+            # A Tensor that holds current epoch
+            self.batch_size_node = tf.placeholder(dtype=Int, shape=(), name='batch_size')
+            self.train_size_node = tf.placeholder(dtype=Int, shape=(), name='train_size')
+            self.lr_feed_dict = {}
+            self.cur_epoch = tf.Variable(0, dtype=Float, name='cur_epoch', trainable=False)
         self.regularizer = lambda x: 0
         self.regularized_term = None
         self._logdir = None
         self._saver = None
-        self.graph = tf.get_default_graph()
+        # self.graph = tf.get_default_graph()
         self.finalized = False
         self._init_op = None
 
@@ -669,37 +671,38 @@ class ConvNet(SequentialNet, Classifier):
         :return: None
         """
         print('compiling ' + self.name_or_scope + ' model')
-        with tf.variable_scope(self.name_or_scope):
-            super(ConvNet, self).compile()
-            # init input node
-            self.train_data_node = tf.placeholder(Float, [None] + self.front.output_shape, 'train_data')
-            self.train_labels_node = tf.placeholder(Int, [None, ], 'train_labels')
-            self.eval_data_node = tf.placeholder(Float, [None] + self.front.output_shape, 'eval_data')
-            self.eval_labels_node = tf.placeholder(Int, [None, ], 'eval_labels')
-
-            self.regularized_term = self.regularizer(tf.get_collection(tf.GraphKeys.WEIGHTS))
-
-            # computation node for training ops
-            self.logits = self.model(self.train_data_node, train=True)
-            self.loss = self._cal_loss(self.logits, self.train_labels_node, 'regularized_loss')
-
-            tf.summary.scalar('loss', self.loss)
-            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            with tf.control_dependencies(update_ops):
-                with tf.name_scope('train'):
-                    # Setup optimizer ops
-                    self.optimizer_op = self.optimizer.minimize(self.loss, self.global_step)
-
-            # Computation node for evaluations
-            if eval:
-                with tf.name_scope('eval'):
-                    self.eval_logits = self.model(self.eval_data_node, train=False)
-                    self.eval_loss = self._cal_loss(self.eval_logits, self.eval_labels_node, 'regularized_loss')
-                    # prediction
-                    self.eval_prediction = tf.nn.softmax(self.eval_logits, name='prediction')
-                    # accuracy
-                    self.acc = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 1, name='acc')
-                    self.acc5 = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 5, name='acc5')
+        with self.graph.as_default():
+            with tf.variable_scope(self.name_or_scope):
+                super(ConvNet, self).compile()
+                # init input node
+                self.train_data_node = tf.placeholder(Float, [None] + self.front.output_shape, 'train_data')
+                self.train_labels_node = tf.placeholder(Int, [None, ], 'train_labels')
+                self.eval_data_node = tf.placeholder(Float, [None] + self.front.output_shape, 'eval_data')
+                self.eval_labels_node = tf.placeholder(Int, [None, ], 'eval_labels')
+    
+                self.regularized_term = self.regularizer(tf.get_collection(tf.GraphKeys.WEIGHTS))
+    
+                # computation node for training ops
+                self.logits = self.model(self.train_data_node, train=True)
+                self.loss = self._cal_loss(self.logits, self.train_labels_node, 'regularized_loss')
+    
+                tf.summary.scalar('loss', self.loss)
+                update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+                with tf.control_dependencies(update_ops):
+                    with tf.name_scope('train'):
+                        # Setup optimizer ops
+                        self.optimizer_op = self.optimizer.minimize(self.loss, self.global_step)
+    
+                # Computation node for evaluations
+                if eval:
+                    with tf.name_scope('eval'):
+                        self.eval_logits = self.model(self.eval_data_node, train=False)
+                        self.eval_loss = self._cal_loss(self.eval_logits, self.eval_labels_node, 'regularized_loss')
+                        # prediction
+                        self.eval_prediction = tf.nn.softmax(self.eval_logits, name='prediction')
+                        # accuracy
+                        self.acc = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 1, name='acc')
+                        self.acc5 = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 5, name='acc5')
 
         # check requirements for training
         assert self.train_data_generator is not None

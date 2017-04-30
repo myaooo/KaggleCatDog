@@ -242,14 +242,17 @@ def generate_data(X, y, batch_size=32, train=True):
     :return: a keras generator
     """
     if train:
+    # if False:
         datagen = ImageDataGenerator(
             rotation_range=20,
             width_shift_range=0.1,
             height_shift_range=0.1,
-            shear_range=0.1,
+            shear_range=0.,
             zoom_range=0.1,
             horizontal_flip=True,
-            fill_mode='nearest')
+            vertical_flip=True,
+            fill_mode='nearest') 
+            # fill_mode='constant')
     else:
         datagen = ImageDataGenerator()
     data_generator = datagen.flow(
