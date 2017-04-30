@@ -18,6 +18,9 @@ tf.app.flags.DEFINE_string('name', '',
 tf.app.flags.DEFINE_string('train', '',
                            """set 'all' if you want to use all the training data""")
 
+tf.app.flags.DEFINE_float('gpu_memory', 1.0,
+                          """the fraction of memory that the process is allowed to use in a gpu""")
+
 # num_epochs = 45
 EVAL_FREQUENCY = 1
 
