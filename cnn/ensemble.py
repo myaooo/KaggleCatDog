@@ -15,6 +15,8 @@ tf.app.flags.DEFINE_string('names', '',
                            """A list of names of models""")
 tf.app.flags.DEFINE_string('dataset', 'valid',
                            """which set of data to run""")
+tf.app.flags.DEFINE_string('out', 'submissions/ensemble.csv',
+                           """the path to the output""")
 
 
 def ensemble_predict(data_generator, models):
@@ -75,7 +77,7 @@ def main():
         cnns.append(cnn)
     if dataset == 'test':
         predictions = ensemble_predict(all_data[2], cnns)
-        generate_submission(predictions, get_path('submissions/ensemble.csv'))
+        generate_submission(predictions[:, 1], get_path(FLAGS.out))
         return
     elif dataset == 'train':
         d = 0
