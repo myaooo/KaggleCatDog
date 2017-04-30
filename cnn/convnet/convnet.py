@@ -295,7 +295,7 @@ class FullyConnectedLayer(Layer):
             result = tf.matmul(input_, self.weights)
             if self.has_bias:
                 result = result + self.bias
-            return tf.add(self.activation(result), 0, name='activation' + name)
+            return self.activation(result)
 
     def compile(self):
         assert self.prev is not None
@@ -779,17 +779,18 @@ class ConvNet(SequentialNet, Classifier):
                                                       float(local_loss / (batch_per_epoch // 10)),
                                                       lr, time.time() - step_time)
                     local_loss = 0
-                    step_time = time.time()
                     if (step + 1) % eval_frequency == 0:
                         # Do evaluation
                         loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
                         add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
                                                    time.time() - epoch_time, eval_size)
                         epoch_time = time.time()
-                        print("average training loss: {:.4f}".format(epoch_loss / batch_per_epoch))
                     log_beautiful_print(msg)
+                    step_time = time.time()
 
                 if (step + 1) % batch_per_epoch == 0:
+                    print("average training loss: {:.4f}".format(epoch_loss / batch_per_epoch))
+                    print('{:*^30}'.format('Epoch {:>2} Done'.format(cur_epoch)))
                     epoch_loss = 0
 
                 self.on_one_batch(sess, step)

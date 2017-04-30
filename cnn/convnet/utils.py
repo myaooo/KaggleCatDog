@@ -11,6 +11,10 @@ import tensorflow as tf
 import tensorflow.contrib.layers as tflayers
 
 
+FLAGS = tf.app.flags.FLAGS
+tf.app.flags.DEFINE_float('gpu_memory', 1.0,
+                          """the fraction of memory that the process is allowed to use in a gpu""")
+
 base_dir = os.path.abspath(os.path.join(__file__, '../../../'))
 
 __str2activation = {
@@ -220,7 +224,7 @@ def init_tf_environ(gpu_num=0):
 
 
 def config_proto():
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1.0)
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_memory)
     return tf.ConfigProto(device_count={"GPU": 1}, gpu_options=gpu_options, allow_soft_placement=True)
 
 # Nvidia-smi GPU memory parsing.

@@ -18,9 +18,6 @@ tf.app.flags.DEFINE_string('name', '',
 tf.app.flags.DEFINE_string('train', '',
                            """set 'all' if you want to use all the training data""")
 
-tf.app.flags.DEFINE_float('gpu_memory', 1.0,
-                          """the fraction of memory that the process is allowed to use in a gpu""")
-
 # num_epochs = 45
 EVAL_FREQUENCY = 1
 
@@ -174,8 +171,8 @@ def model4(name=''):
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.0005)  # 0.001
-    model.set_optimizer('RMSProp')
+    model.set_learning_rate(0.1)  # 0.001 for RMSProp
+    model.set_optimizer('Adadelta')
     return model
 
 
@@ -238,9 +235,9 @@ def model6(name=''):
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[24000, 36000, 48000],
-    #                         values=[0.05, 0.005, 0.0005, 0.00005])
-                            values=[0.02, 0.002, 0.0002, 0.00002])
+    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[1600, 32000, 44000, 56000],
+                            values=[0.01, 0.05, 0.005, 0.0005, 0.00005])
+    #                         values=[0.03, 0.003, 0.0003, 0.00003])
     model.set_optimizer('Momentum', momentum=0.9)
     # model.set_learning_rate(0.0002)
     # model.set_optimizer('Adam')

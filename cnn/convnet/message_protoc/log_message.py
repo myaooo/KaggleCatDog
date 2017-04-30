@@ -39,5 +39,5 @@ def log_beautiful_print(train_message):
                     eval_msg.acc,
                     eval_msg.acc5,
                     eval_msg.eval_num)
-        out2 += '\n{:*^30}'.format(temp + ' Done')
+        # out2 += '\n{:*^30}'.format(temp + ' Done')
         print(out2)
