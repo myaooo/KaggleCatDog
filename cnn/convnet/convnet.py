@@ -758,12 +758,14 @@ class ConvNet(SequentialNet, Classifier):
         sess = self.sess
         with self.graph.as_default():
             epoch_loss = 0
+            local_loss = 0
             for step in range(total_step):
                 # Get next train batch
                 feed_dict = self.feed_dict()
                 # Train one batch
-                _, local_loss = sess.run([self.optimizer_op, self.loss], feed_dict)
-                epoch_loss += local_loss
+                _, _loss = sess.run([self.optimizer_op, self.loss], feed_dict)
+                epoch_loss += _loss
+                local_loss += _loss
                 # Maybe print log
                 if (step + 1) % (batch_per_epoch // 10) == 0:
                     # test_step = tf.train.global_step(sess, self.global_step)
@@ -774,8 +776,9 @@ class ConvNet(SequentialNet, Classifier):
                         lr = sess.run(self.learning_rate, feed_dict)
                     # local_loss = sess.run(self.loss, feed_dict)
                     msg = create_training_log_message(cur_epoch, batch, batch_per_epoch,
-                                                      float(epoch_loss / ((step % batch_per_epoch) + 1)),
+                                                      float(local_loss / (batch_per_epoch // 10)),
                                                       lr, time.time() - step_time)
+                    local_loss = 0
                     step_time = time.time()
                     if (step + 1) % eval_frequency == 0:
                         # Do evaluation
@@ -783,6 +786,7 @@ class ConvNet(SequentialNet, Classifier):
                         add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
                                                    time.time() - epoch_time, eval_size)
                         epoch_time = time.time()
+                        print("average training loss: {:.4f}".format(epoch_loss / batch_per_epoch))
                     log_beautiful_print(msg)
 
                 if (step + 1) % batch_per_epoch == 0:
