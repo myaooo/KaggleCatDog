@@ -441,6 +441,43 @@ class ResLayer(Layer):
         return self._is_compiled
 
 
+class ResNINLayer(ResLayer):
+    def __init__(self, filter_size, out_channels, strides, name_or_scope, padding='SAME', activation='relu',
+                 activate_before_residual=True, decay=0.99, epsilon=0.001):
+        super(ResNINLayer, self).__init__(filter_size, out_channels, strides, name_or_scope, padding, activation,
+                 activate_before_residual, decay, epsilon)
+
+    def compile(self):
+        input_shape = self.prev.output_shape
+        # Compute weight shapes
+        in_channels = input_shape[-1]
+        out_channels = self._out_channels
+        # self.shape = self._filter_size + [in_channels, out_channels]
+        assert len(self.net1) == 0
+        self.net1.append(InputLayer(dshape=[None] + input_shape))
+        self.net2.append(InputLayer(dshape=[None] + input_shape))
+        self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
+        self.net1.append(ConvLayer(self._filter_size, out_channels, self.strides,
+                                   self.net1.name_or_scope + '_conv1', activation='linear',
+                                   has_bias=False))
+        self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn1', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
+        self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
+                                   self.net1.name_or_scope + '_conv2', activation='linear',
+                                   has_bias=True))
+        self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn2', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
+        self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
+                                   self.net1.name_or_scope + '_conv3', activation='linear',
+                                   has_bias=True))
+        if in_channels != out_channels:
+            self.net2.append(ConvLayer(self.strides, out_channels, self.strides,
+                                       self.net2.name_or_scope + 'shortcut'))
+            self.net2.append(BatchNormLayer(self.net2.name_or_scope + 'bn', decay=self.decay,
+                                        epsilon=self.epsilon, activation=self.activation))
+
+
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and sparse labels."""
     return 100.0 - (100.0 * np.sum(np.argmax(predictions, 1) == labels) / predictions.shape[0])
