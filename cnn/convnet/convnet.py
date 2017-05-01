@@ -795,6 +795,8 @@ class ConvNet(SequentialNet, Classifier):
         print('start training...')
         epoch_time = step_time = start_time = time.time()
         sess = self.sess
+        losses = []
+        valid_losses = []
         with self.graph.as_default():
             epoch_loss = 0
             local_loss = 0
@@ -817,13 +819,14 @@ class ConvNet(SequentialNet, Classifier):
                     msg = create_training_log_message(cur_epoch, batch, batch_per_epoch,
                                                       float(local_loss / (batch_per_epoch // 10)),
                                                       lr, time.time() - step_time)
+                    losses.append(local_loss)
                     local_loss = 0
                     if (step + 1) % eval_frequency == 0:
                         # Do evaluation
                         loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
                         add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
                                                    time.time() - epoch_time, eval_size)
-                        epoch_time = time.time()
+                        valid_losses.append(loss)
                     log_beautiful_print(msg)
                     step_time = time.time()
 
@@ -831,8 +834,10 @@ class ConvNet(SequentialNet, Classifier):
                     print("average training loss: {:.4f}".format(epoch_loss / batch_per_epoch))
                     print('{:*^30}'.format('Epoch {:>2} Done'.format(cur_epoch)))
                     epoch_loss = 0
+                    epoch_time = time.time()
 
                 self.on_one_batch(sess, step)
+        return losses, valid_losses
 
     def on_one_batch(self, sess, step):
         """

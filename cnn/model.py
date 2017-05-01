@@ -2,8 +2,9 @@ import tensorflow as tf
 
 from cnn.convnet.convnet import ConvNet
 from cnn.convnet.recorder import ConvRecorder
-from cnn.convnet.utils import init_tf_environ, get_path
+from cnn.convnet.utils import init_tf_environ, get_path, before_save
 from cnn.data.preprocess import IMG_SIZE, CHANNELS, NUM_LABELS, prep_data, BATCH_SIZE
+from generate_submission import lists2csv
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -272,8 +273,17 @@ def main():
     all_data = prep_data(test=False, all=FLAGS.train == 'all')
     model = build_model(FLAGS.model, FLAGS.name, *all_data[:2])
     # rec = ConvRecorder(model, get_path('models', 'lenet/train'))
-    model.train(BATCH_SIZE, FLAGS.epoch, EVAL_FREQUENCY)
+    losses, valid_losses = model.train(BATCH_SIZE, FLAGS.epoch, EVAL_FREQUENCY)
     model.save()
+    total_steps = FLAGS.epoch * all_data[0].n // BATCH_SIZE
+    log_step = all_data[0].n // BATCH_SIZE // 10
+    train_steps = range(0, total_steps, log_step)
+    valid_steps = range(0, total_steps, log_step * 10)
+    train_log_file = get_path('log', model.name_or_scope + '_train.csv')
+    valid_log_file = get_path('log', model.name_or_scope + '_valid.csv')
+    before_save(train_log_file)
+    lists2csv(list(zip(train_steps, losses)), train_log_file, header=['step', 'loss'])
+    lists2csv(list(zip(valid_steps, valid_losses)), valid_log_file, header=['step', 'loss'])
 
 
 if __name__ == '__main__':
