@@ -476,6 +476,9 @@ class ResNINLayer(ResLayer):
                                        self.net2.name_or_scope + 'shortcut'))
             self.net2.append(BatchNormLayer(self.net2.name_or_scope + 'bn', decay=self.decay,
                                         epsilon=self.epsilon, activation=self.activation))
+        for net in [self.net1, self.net2]:
+            net.compile()
+        self._is_compiled = True
 
 
 def error_rate(predictions, labels):
@@ -628,6 +631,13 @@ class ConvNet(SequentialNet, Classifier):
         layer_name = 'res' + str(self.size)
         self.layers.append(layer_name)
         self.push_back(ResLayer(filter_size, out_channels, strides, layer_name, padding, activation=activation,
+                                activate_before_residual=activate_before_residual, decay=decay, epsilon=epsilon))
+
+    def push_res_nin_layer(self, filter_size, out_channels, strides, padding='SAME', activation='relu',
+                       activate_before_residual=True, decay=0.9, epsilon=0.001):
+        layer_name = 'res' + str(self.size)
+        self.layers.append(layer_name)
+        self.push_back(ResNINLayer(filter_size, out_channels, strides, layer_name, padding, activation=activation,
                                 activate_before_residual=activate_before_residual, decay=decay, epsilon=epsilon))
 
     def set_regularizer(self, regularizer=None, scale=0):

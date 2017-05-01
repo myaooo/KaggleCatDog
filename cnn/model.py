@@ -114,6 +114,9 @@ def model3b(name=''):
     # Network in Network
     model = ConvNet(name or 'NIN-test')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
+    model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
+    model.push_batch_norm_layer(activation='relu')
+    model.push_pool_layer('max', [2, 2], strides=[2, 2])
     model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='linear')
     model.push_batch_norm_layer(activation='relu')
     model.push_conv_layer(filter_size=[1, 1], out_channels=64, strides=[1, 1], activation='relu')
@@ -131,10 +134,8 @@ def model3b(name=''):
     model.push_conv_layer(filter_size=[1, 1], out_channels=256, strides=[1, 1], activation='relu')
     model.push_conv_layer(filter_size=[1, 1], out_channels=256, strides=[1, 1], activation='linear')
     model.push_batch_norm_layer(activation='relu')
-    model.push_pool_layer('avg', kernel_size=[1, int(IMG_SIZE[0]/4), int(IMG_SIZE[1]/4), 1], strides=[int(IMG_SIZE[0]/4), int(IMG_SIZE[1]/4)])
+    model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0]/8), int(IMG_SIZE[1]/8)], strides=[int(IMG_SIZE[0]/8), int(IMG_SIZE[1]/8)])
     model.push_flatten_layer()
-    model.push_fully_connected_layer(out_channels=512, activation='relu')
-    model.push_dropout_layer(0.7)
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
@@ -178,23 +179,23 @@ def model4(name=''):
 
 def model5(name=''):
     # test resnet
-    model = ConvNet(name or 'ResNet2')
+    model = ConvNet(name or 'ResNIN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('max', [2, 2], strides=[2, 2])
-    model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
+    model.push_res_nin_layer([3, 3], 64, strides=[1, 1], activation='relu')
     for i in range(2):
-        model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 128, strides=[2, 2], activation='relu')
+        model.push_res_nin_layer([3, 3], 64, strides=[1, 1], activation='relu')
+    model.push_res_nin_layer([3, 3], 128, strides=[2, 2], activation='relu')
     for i in range(3):
-        model.push_res_layer([3, 3], 128, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 256, strides=[2, 2], activation='relu')
-    for i in range(5):
-        model.push_res_layer([3, 3], 256, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 512, strides=[2, 2], activation='relu')
+        model.push_res_nin_layer([3, 3], 128, strides=[1, 1], activation='relu')
+    model.push_res_nin_layer([3, 3], 256, strides=[2, 2], activation='relu')
+    for i in range(6):
+        model.push_res_nin_layer([3, 3], 256, strides=[1, 1], activation='relu')
+    model.push_res_nin_layer([3, 3], 512, strides=[2, 2], activation='relu')
     for i in range(2):
-        model.push_res_layer([3, 3], 512, strides=[1, 1], activation='relu')
+        model.push_res_nin_layer([3, 3], 512, strides=[1, 1], activation='relu')
     # model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)],
                           strides=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)])
@@ -235,9 +236,9 @@ def model6(name=''):
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[1600, 32000, 44000, 56000],
+    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[800, 40000, 56000, 72000],
                             values=[0.01, 0.05, 0.005, 0.0005, 0.00005])
-    #                         values=[0.03, 0.003, 0.0003, 0.00003])
+    #                         values=[0.02, 0.002, 0.0002, 0.00002])  # boundaries=[40000, 52000, 64000]
     model.set_optimizer('Momentum', momentum=0.9)
     # model.set_learning_rate(0.0002)
     # model.set_optimizer('Adam')
