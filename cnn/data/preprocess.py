@@ -18,7 +18,7 @@ TEST_DIR = os.path.join(PREPROCESSED, 'test/')
 IMG_SIZE = (128, 128)
 CHANNELS = 3
 NUM_LABELS = 2
-BATCH_SIZE = 25
+BATCH_SIZE = 50
 
 SEED = None
 

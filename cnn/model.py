@@ -4,7 +4,7 @@ from cnn.convnet.convnet import ConvNet
 from cnn.convnet.recorder import ConvRecorder
 from cnn.convnet.utils import init_tf_environ, get_path, before_save
 from cnn.data.preprocess import IMG_SIZE, CHANNELS, NUM_LABELS, prep_data, BATCH_SIZE
-from generate_submission import lists2csv
+from cnn.generate_submission import lists2csv
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -88,7 +88,7 @@ def model2(name=''):
 
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[16000, 32000, 48000], 
+    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[20*20000//BATCH_SIZE, 30*20000//BATCH_SIZE, 40*20000//BATCH_SIZE], 
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', 0.9)
     # model.set_learning_rate(0.001)
@@ -172,22 +172,28 @@ def model4(name=''):
     # test resnet
     model = ConvNet(name or 'ResNet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
-    model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
+    # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
+    model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='linear', has_bias=False)
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('max', [2, 2], strides=[2, 2])
-    model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
+    model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu', activate_before_residual=False)
     for i in range(2):
         model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 128, strides=[2, 2], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_layer([3, 3], 128, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(3):
         model.push_res_layer([3, 3], 128, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 256, strides=[2, 2], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_layer([3, 3], 256, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(5):
         model.push_res_layer([3, 3], 256, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 512, strides=[2, 2], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_layer([3, 3], 512, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(2):
         model.push_res_layer([3, 3], 512, strides=[1, 1], activation='relu')
-    # model.push_batch_norm_layer(activation='relu')
+    model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)],
                           strides=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)])
     model.push_flatten_layer()
@@ -204,22 +210,30 @@ def model5(name=''):
     # test resnet
     model = ConvNet(name or 'ResNIN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
-    model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
+    # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
+    # model.push_batch_norm_layer(activation='relu')
+    # model.push_pool_layer('max', [2, 2], strides=[2, 2])
+    model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='linear', has_bias=False)
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('max', [2, 2], strides=[2, 2])
-    model.push_res_nin_layer([3, 3], 64, strides=[1, 1], activation='relu')
+    model.push_res_nin_layer([3, 3], 64, strides=[1, 1], activation='relu', activate_before_residual=False)
     for i in range(2):
         model.push_res_nin_layer([3, 3], 64, strides=[1, 1], activation='relu')
-    model.push_res_nin_layer([3, 3], 128, strides=[2, 2], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_nin_layer([3, 3], 128, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(3):
         model.push_res_nin_layer([3, 3], 128, strides=[1, 1], activation='relu')
-    model.push_res_nin_layer([3, 3], 256, strides=[2, 2], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_nin_layer([3, 3], 256, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(6):
         model.push_res_nin_layer([3, 3], 256, strides=[1, 1], activation='relu')
-    model.push_res_nin_layer([3, 3], 512, strides=[2, 2], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_nin_layer([3, 3], 512, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(2):
         model.push_res_nin_layer([3, 3], 512, strides=[1, 1], activation='relu')
-    # model.push_batch_norm_layer(activation='relu')
+    model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)],
                           strides=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)])
     model.push_flatten_layer()
@@ -227,8 +241,12 @@ def model5(name=''):
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.0002)
-    model.set_optimizer('Adam')
+    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[40*20000//BATCH_SIZE, 70*20000//BATCH_SIZE],
+                            values=[0.1, 0.01, 0.001])
+    #                         values=[0.02, 0.002, 0.0002, 0.00002])  # boundaries=[40000, 52000, 64000]
+    model.set_optimizer('Momentum', momentum=0.9)
+    # model.set_learning_rate(0.0002)
+    # model.set_optimizer('Adam')
     return model
 
 
@@ -236,22 +254,30 @@ def model6(name=''):
     # test resnet
     model = ConvNet(name or 'ResNet2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
-    model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
+    # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
+    # model.push_batch_norm_layer(activation='relu')
+    # model.push_pool_layer('max', [2, 2], strides=[2, 2])
+    model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='linear', has_bias=False)
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('max', [2, 2], strides=[2, 2])
-    model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
+    model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu', activate_before_residual=False)
     for i in range(2):
         model.push_res_layer([3, 3], 64, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 128, strides=[2, 2], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_layer([3, 3], 128, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(3):
         model.push_res_layer([3, 3], 128, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 256, strides=[2, 2], activation='relu')
-    for i in range(5):
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_layer([3, 3], 256, strides=[2, 2], activation='relu', activate_before_residual=False)
+    for i in range(8):
         model.push_res_layer([3, 3], 256, strides=[1, 1], activation='relu')
-    model.push_res_layer([3, 3], 512, strides=[2, 2], activation='relu')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_res_layer([3, 3], 512, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(2):
         model.push_res_layer([3, 3], 512, strides=[1, 1], activation='relu')
-    # model.push_batch_norm_layer(activation='relu')
+    model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)],
                           strides=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)])
     model.push_flatten_layer()
@@ -259,8 +285,8 @@ def model6(name=''):
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[800, 40000, 56000, 72000],
-                            values=[0.01, 0.05, 0.005, 0.0005, 0.00005])
+    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[40*20000//BATCH_SIZE, 70*20000//BATCH_SIZE],
+                            values=[0.1, 0.01, 0.001])
     #                         values=[0.02, 0.002, 0.0002, 0.00002])  # boundaries=[40000, 52000, 64000]
     model.set_optimizer('Momentum', momentum=0.9)
     # model.set_learning_rate(0.0002)

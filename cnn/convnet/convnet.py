@@ -398,8 +398,9 @@ class ResLayer(Layer):
         assert len(self.net1) == 0
         self.net1.append(InputLayer(dshape=[None] + input_shape))
         self.net2.append(InputLayer(dshape=[None] + input_shape))
-        self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
-                                        epsilon=self.epsilon, activation=self.activation))
+        if self.activate_before_residual:
+            self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
+                                            epsilon=self.epsilon, activation=self.activation))
         self.net1.append(ConvLayer(self._filter_size, out_channels, self.strides,
                                    self.net1.name_or_scope + '_conv1', activation='linear',
                                    has_bias=False))
@@ -414,10 +415,11 @@ class ResLayer(Layer):
             # d_channels = out_channels - in_channels
             # self.net2.append(PadLayer([[0, 0], [0, 0], [0, 0], [d_channels//2, d_channels//2]],
             #                           self.net2.name_or_scope + '_pad'))
+            # self.net2.append(BatchNormLayer(self.net2.name_or_scope + 'bn', decay=self.decay,
+            #                                 epsilon=self.epsilon, activation=self.activation))
             self.net2.append(ConvLayer(self.strides, out_channels, self.strides,
-                                       self.net2.name_or_scope + 'shortcut'))
-            self.net2.append(BatchNormLayer(self.net2.name_or_scope + 'bn', decay=self.decay,
-                                        epsilon=self.epsilon, activation=self.activation))
+                                       self.net2.name_or_scope + 'shortcut', activation='linear',
+                                       has_bias=False))
 
         for net in [self.net1, self.net2]:
             net.compile()
@@ -448,8 +450,9 @@ class ResNINLayer(ResLayer):
         assert len(self.net1) == 0
         self.net1.append(InputLayer(dshape=[None] + input_shape))
         self.net2.append(InputLayer(dshape=[None] + input_shape))
-        self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
-                                        epsilon=self.epsilon, activation=self.activation))
+        if self.activate_before_residual:
+            self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
+                                            epsilon=self.epsilon, activation=self.activation))
         self.net1.append(ConvLayer(self._filter_size, out_channels, self.strides,
                                    self.net1.name_or_scope + '_conv1', activation='linear',
                                    has_bias=False))
@@ -457,17 +460,16 @@ class ResNINLayer(ResLayer):
                                         epsilon=self.epsilon, activation=self.activation))
         self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
                                    self.net1.name_or_scope + '_conv2', activation='linear',
-                                   has_bias=True))
+                                   has_bias=False))
         self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn2', decay=self.decay,
                                         epsilon=self.epsilon, activation=self.activation))
         self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
                                    self.net1.name_or_scope + '_conv3', activation='linear',
-                                   has_bias=True))
+                                   has_bias=False))
         if in_channels != out_channels:
             self.net2.append(ConvLayer(self.strides, out_channels, self.strides,
-                                       self.net2.name_or_scope + 'shortcut'))
-            self.net2.append(BatchNormLayer(self.net2.name_or_scope + 'bn', decay=self.decay,
-                                        epsilon=self.epsilon, activation=self.activation))
+                                       self.net2.name_or_scope + 'shortcut', activation='linear',
+                                       has_bias=False))
         for net in [self.net1, self.net2]:
             net.compile()
         self._is_compiled = True
@@ -819,7 +821,7 @@ class ConvNet(SequentialNet, Classifier):
                     msg = create_training_log_message(cur_epoch, batch, batch_per_epoch,
                                                       float(local_loss / (batch_per_epoch // 10)),
                                                       lr, time.time() - step_time)
-                    losses.append(local_loss)
+                    losses.append(local_loss / (batch_per_epoch // 10))
                     local_loss = 0
                     if (step + 1) % eval_frequency == 0:
                         # Do evaluation
