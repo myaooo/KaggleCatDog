@@ -247,10 +247,10 @@ def generate_data(X, y, batch_size=32, train=True):
             rotation_range=20,
             width_shift_range=0.1,
             height_shift_range=0.1,
-            shear_range=0.,
+            shear_range=0.1,
             zoom_range=0.1,
             horizontal_flip=True,
-            vertical_flip=True,
+            # vertical_flip=True,
             fill_mode='nearest') 
             # fill_mode='constant')
     else:
