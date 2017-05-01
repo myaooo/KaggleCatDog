@@ -557,7 +557,7 @@ class ConvNet(SequentialNet, Classifier):
         self.eval_data_node = tf.placeholder(self.dtype, shape=(None, dshape[1], dshape[2], dshape[3]))
         self.eval_labels_node = tf.placeholder(Int, shape=(None,))
 
-    def push_conv_layer(self, filter_size, out_channels, strides, padding='SAME', activation='linear', has_bias=True):
+    def push_conv_layer(self, filter_size, out_channels, strides, padding='SAME', activation='linear', has_bias=False):
         """
         Push a convolutional layer at the back of the layer list.
         :param filter_size: should be a (x,y) shaped tuple
