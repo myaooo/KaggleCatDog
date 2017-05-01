@@ -408,13 +408,7 @@ class ResLayer(Layer):
         self.net1.append(ConvLayer(self._filter_size, out_channels, [1, 1],
                                    self.net1.name_or_scope + '_conv2', activation='linear',
                                    has_bias=False))
-        # self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn2', decay=self.decay,
-        #                                 epsilon=self.epsilon, activation=self.activation))
-        # self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
-        #                            self.net1.name_or_scope + '_conv3', activation='linear',
-        #                            has_bias=False))
-        # self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn3', decay=self.decay,
-        #                                 epsilon=self.epsilon, activation=self.activation))
+
         if in_channels != out_channels:
             # self.net2.append(PoolLayer('avg', self.strides, self.strides, self.net2.name_or_scope + '_avg'))
             # d_channels = out_channels - in_channels
@@ -424,8 +418,6 @@ class ResLayer(Layer):
                                        self.net2.name_or_scope + 'shortcut'))
             self.net2.append(BatchNormLayer(self.net2.name_or_scope + 'bn', decay=self.decay,
                                         epsilon=self.epsilon, activation=self.activation))
-        # self.net3.append(BatchNormLayer(self.net3.name_or_scope + '_bn2', decay=self.decay,
-        #                                 epsilon=self.epsilon, activation=self.activation))
 
         for net in [self.net1, self.net2]:
             net.compile()
@@ -1004,8 +996,3 @@ class ConvNet(SequentialNet, Classifier):
         self.finalize()
         with self.graph.as_default():
             return func(self.sess, *args, **kwargs)
-
-
-def load_model_from_yml(filename):
-    net = ConvNet('pass')
-    return net
