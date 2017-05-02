@@ -34,11 +34,11 @@ def clean_data(cats, dogs):
         mis_dogs.append(dogs[idx])
     cats = np.append(cats, mis_dogs, 0)
 
-    indice = [11222, 1450, 2159, 3822, 4104, 5355, 7194, 7920, 9250, 9444, 9882]:  # 11
+    indice = [11222, 1450, 2159, 3822, 4104, 5355, 7194, 7920, 9250, 9444, 9882]  # 11
     indice += [4688, 2939, 3216, 4833, 7968, 8470, 10712, 11184, 7564, 8456, 5418, 9171, 5351, 7377, 11565]  # 15
     cats = np.delete(cats, indice, 0)
 
-    indice = [1308, 1895, 9188, 10161, 10190, 11186, 10747, 2614, 4367, 8736, 12376, 1773, 10237, 1043, 1194, 5604, 9517, 10797, 2877, 8898]:  # 20
+    indice = [1308, 1895, 9188, 10161, 10190, 11186, 10747, 2614, 4367, 8736, 12376, 1773, 10237, 1043, 1194, 5604, 9517, 10797, 2877, 8898]  # 20
     indice += [11538, 11724, 8507, 11731, 4334]  # 5
     dogs = np.delete(dogs, indice, 0)
     return cats, dogs
@@ -149,9 +149,9 @@ def maybe_preprocess(train=True, ratio=None):
         cats, dogs = clean_data(cats, dogs)
         cat_train, cat_valid = split_data(cats, [1 - ratio, ratio])
         dog_train, dog_valid = split_data(dogs, [1 - ratio, ratio])
-        images = cat_train + dog_train
+        images = np.append(cat_train, dog_train, 0)
         labels = [0] * len(cat_train) + [1] * len(dog_train)
-        valid_images = cat_valid + dog_valid
+        valid_images = np.append(cat_valid, dog_valid, 0)
         valid_labels = [0] * len(cat_valid) + [1] * len(dog_valid)
         images, labels = zip(*shuffle_data(list(zip(images, labels))))
         data, labels = format_data(list(images), list(labels))
@@ -198,7 +198,7 @@ def maybe_calculate(filename, cal_fn, *args, **kwargs):
     return results
 
 
-def prep_data(valid_ratio=0.2, test=False, all=False):
+def prep_data(valid_ratio=4950.0/24950, test=False, all=False):
     assert 0 < valid_ratio < 1
     train_file = os.path.join(DATA_ROOT, 'tmp/train.pkl')
     train, valid = maybe_calculate(train_file, maybe_preprocess, True, valid_ratio)
