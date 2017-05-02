@@ -273,7 +273,7 @@ def model6(name=''):
         model.push_res_layer([3, 3], 128, strides=[1, 1], activation='relu')
     model.push_batch_norm_layer(activation='relu')
     model.push_res_layer([3, 3], 256, strides=[2, 2], activation='relu', activate_before_residual=False)
-    for i in range(8):
+    for i in range(5):
         model.push_res_layer([3, 3], 256, strides=[1, 1], activation='relu')
     model.push_batch_norm_layer(activation='relu')
     model.push_res_layer([3, 3], 512, strides=[2, 2], activation='relu', activate_before_residual=False)

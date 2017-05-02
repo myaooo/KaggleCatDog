@@ -160,9 +160,9 @@ def maybe_preprocess(train=True, ratio=None):
         cats, dogs = clean_data(cats, dogs)
         cat_train, cat_valid = split_data(cats, [1 - ratio, ratio])
         dog_train, dog_valid = split_data(dogs, [1 - ratio, ratio])
-        images = cat_train + dog_train
+        images = np.append(cat_train, dog_train, 0)
         labels = [0] * len(cat_train) + [1] * len(dog_train)
-        valid_images = cat_valid + dog_valid
+        valid_images = np.append(cat_valid, dog_valid, 0)
         valid_labels = [0] * len(cat_valid) + [1] * len(dog_valid)
         images, labels = zip(*shuffle_data(list(zip(images, labels))))
         data, labels = format_data(list(images), list(labels))
@@ -209,7 +209,7 @@ def maybe_calculate(filename, cal_fn, *args, **kwargs):
     return results
 
 
-def prep_data(valid_ratio=0.2, test=False, all=False):
+def prep_data(valid_ratio=4950.0/24950, test=False, all=False):
     assert 0 < valid_ratio < 1
     train_file = os.path.join(DATA_ROOT, 'tmp/train.pkl')
     train, valid = maybe_calculate(train_file, maybe_preprocess, True, valid_ratio)
