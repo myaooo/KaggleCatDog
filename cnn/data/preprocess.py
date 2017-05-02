@@ -34,11 +34,11 @@ def clean_data(cats, dogs):
         mis_dogs.append(dogs[idx])
     cats = np.append(cats, mis_dogs, 0)
 
-    indice = [11222, 1450, 2159, 3822, 4104, 5355, 7194, 7920, 9250, 9444, 9882]:  # 11
+    indice = [11222, 1450, 2159, 3822, 4104, 5355, 7194, 7920, 9250, 9444, 9882]  # 11
     indice += [4688, 2939, 3216, 4833, 7968, 8470, 10712, 11184, 7564, 8456, 5418, 9171, 5351, 7377, 11565]  # 15
     cats = np.delete(cats, indice, 0)
 
-    indice = [1308, 1895, 9188, 10161, 10190, 11186, 10747, 2614, 4367, 8736, 12376, 1773, 10237, 1043, 1194, 5604, 9517, 10797, 2877, 8898]:  # 20
+    indice = [1308, 1895, 9188, 10161, 10190, 11186, 10747, 2614, 4367, 8736, 12376, 1773, 10237, 1043, 1194, 5604, 9517, 10797, 2877, 8898]  # 20
     indice += [11538, 11724, 8507, 11731, 4334]  # 5
     dogs = np.delete(dogs, indice, 0)
     return cats, dogs
@@ -113,11 +113,22 @@ def preprocess_images(image_paths, target_size=IMG_SIZE):
     print('*****Preprocessing*****')
     count = len(image_paths)
     images = []
+    target_ratio = float(target_size[0]) / target_size[1]
     for i, image_path in enumerate(image_paths):
         if (i + 1) % 1000 == 0:
             print("Resizing {}/{}".format(i + 1, count))
         image = read_image(image_path)
-        images.append(cv2.resize(image, target_size, interpolation=cv2.INTER_CUBIC))
+        if image is None:
+            continue
+        if image.shape[0] > image.shape[1]:
+            pad = (image.shape[0] - image.shape[1]) // 2
+            padding = [0, 0, pad, pad]
+        else:
+            pad = (image.shape[1] - image.shape[0]) // 2
+            padding = [pad, pad, 0, 0]
+        image = cv2.copyMakeBorder(image, *padding, cv2.BORDER_CONSTANT, value=[128,128,128])
+        image = cv2.resize(image, target_size, interpolation=cv2.INTER_CUBIC)
+        images.append(image)
     return images
 
 
