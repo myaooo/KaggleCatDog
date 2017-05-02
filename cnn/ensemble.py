@@ -35,7 +35,7 @@ def ensemble_predict(data_generator, models):
 def cal_loss(predictions, labels):
     total_loss = 0
     for i, label in enumerate(labels):
-        total_loss += np.log(1.0 / predictions[i, label])
+        total_loss -= np.log(predictions[i, label])
     return total_loss/len(labels)
 
 
