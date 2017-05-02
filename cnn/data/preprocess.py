@@ -113,11 +113,22 @@ def preprocess_images(image_paths, target_size=IMG_SIZE):
     print('*****Preprocessing*****')
     count = len(image_paths)
     images = []
+    target_ratio = float(target_size[0]) / target_size[1]
     for i, image_path in enumerate(image_paths):
         if (i + 1) % 1000 == 0:
             print("Resizing {}/{}".format(i + 1, count))
         image = read_image(image_path)
-        images.append(cv2.resize(image, target_size, interpolation=cv2.INTER_CUBIC))
+        if image is None:
+            continue
+        if image.shape[0] > image.shape[1]:
+            pad = (image.shape[0] - image.shape[1]) // 2
+            padding = [0, 0, pad, pad]
+        else:
+            pad = (image.shape[1] - image.shape[0]) // 2
+            padding = [pad, pad, 0, 0]
+        image = cv2.copyMakeBorder(image, *padding, cv2.BORDER_CONSTANT, value=[128,128,128])
+        image = cv2.resize(image, target_size, interpolation=cv2.INTER_CUBIC)
+        images.append(image)
     return images
 
 
