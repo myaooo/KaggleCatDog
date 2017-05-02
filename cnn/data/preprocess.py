@@ -251,6 +251,7 @@ def generate_data(X, y, batch_size=32, train=True):
             zoom_range=0.1,
             horizontal_flip=True,
             # vertical_flip=True,
+            # samplewise_center=True,
             fill_mode='nearest') 
             # fill_mode='constant')
     else:

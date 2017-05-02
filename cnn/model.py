@@ -21,7 +21,7 @@ tf.app.flags.DEFINE_string('train', '',
 
 # num_epochs = 45
 EVAL_FREQUENCY = 1
-
+N = N
 
 def build_model(model_no, name, train_data_generator, valid_data_generator):
     models = [model1, model2, model3b, model4, model5, model6]
@@ -88,7 +88,7 @@ def model2(name=''):
 
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[20*20000//BATCH_SIZE, 30*20000//BATCH_SIZE, 40*20000//BATCH_SIZE], 
+    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[20*N//BATCH_SIZE, 30*N//BATCH_SIZE, 40*N//BATCH_SIZE], 
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', 0.9)
     # model.set_learning_rate(0.001)
@@ -241,8 +241,8 @@ def model5(name=''):
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[40*20000//BATCH_SIZE, 70*20000//BATCH_SIZE],
-                            values=[0.1, 0.01, 0.001])
+    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[30*N//BATCH_SIZE, 50*N//BATCH_SIZE, 65*N//BATCH_SIZE],
+                            values=[0.1, 0.01, 0.001, 0.0001])
     #                         values=[0.02, 0.002, 0.0002, 0.00002])  # boundaries=[40000, 52000, 64000]
     model.set_optimizer('Momentum', momentum=0.9)
     # model.set_learning_rate(0.0002)
@@ -285,8 +285,8 @@ def model6(name=''):
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
     model.set_regularizer('l2', 1e-5)
-    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[40*20000//BATCH_SIZE, 70*20000//BATCH_SIZE],
-                            values=[0.1, 0.01, 0.001])
+    model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[30*N//BATCH_SIZE, 50*N//BATCH_SIZE, 65*N//BATCH_SIZE],
+                            values=[0.1, 0.01, 0.001, 0.0001])
     #                         values=[0.02, 0.002, 0.0002, 0.00002])  # boundaries=[40000, 52000, 64000]
     model.set_optimizer('Momentum', momentum=0.9)
     # model.set_learning_rate(0.0002)
@@ -296,6 +296,7 @@ def model6(name=''):
 
 def main():
     init_tf_environ(gpu_num=1)
+    N = 25000 if FLAGS.train == 'all' else N
     all_data = prep_data(test=False, all=FLAGS.train == 'all')
     model = build_model(FLAGS.model, FLAGS.name, *all_data[:2])
     # rec = ConvRecorder(model, get_path('models', 'lenet/train'))
