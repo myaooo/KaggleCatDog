@@ -799,6 +799,7 @@ class ConvNet(SequentialNet, Classifier):
         sess = self.sess
         losses = []
         valid_losses = []
+        counter = 10
         with self.graph.as_default():
             epoch_loss = 0
             local_loss = 0
@@ -810,7 +811,8 @@ class ConvNet(SequentialNet, Classifier):
                 epoch_loss += _loss
                 local_loss += _loss
                 # Maybe print log
-                if (step + 1) % (batch_per_epoch // 10) == 0 or (step + 1) % batch_per_epoch == 0:
+                if (step + 1) % (batch_per_epoch // counter) == 0:
+                    counter += 0
                     # test_step = tf.train.global_step(sess, self.global_step)
                     cur_epoch = step // batch_per_epoch
                     batch = (step % batch_per_epoch) + 1
@@ -823,17 +825,21 @@ class ConvNet(SequentialNet, Classifier):
                                                       lr, time.time() - step_time)
                     losses.append(local_loss / (batch_per_epoch // 10))
                     local_loss = 0
-                    if (step + 1) % batch_per_epoch == 0:
+                    # if counter % batch_per_epoch == 0:
                         # Do evaluation
-                        loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
-                        add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
-                                                   time.time() - epoch_time, eval_size)
-                        valid_losses.append(loss)
+                        # loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
+                        # add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
+                        #                            time.time() - epoch_time, eval_size)
+                        # valid_losses.append(loss)
                     log_beautiful_print(msg)
                     step_time = time.time()
 
                 if (step + 1) % batch_per_epoch == 0:
                     print("average training loss: {:.4f}".format(epoch_loss / batch_per_epoch))
+                    loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
+                    valid_losses.append(loss)
+                    print('Time: {.2f}s, Loss: {:3f}, Acc: {:.2f}%, eval num: {d}'.format(
+                          time.time() - epoch_time, loss, acc*100, eval_size))
                     print('{:*^30}'.format('Epoch {:>2} Done'.format(cur_epoch)))
                     epoch_loss = 0
                     epoch_time = time.time()
