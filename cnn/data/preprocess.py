@@ -26,6 +26,24 @@ data_type = np.float32
 label_type = np.int8
 
 
+def clean_data(cats, dogs):
+
+    # both_cats = []
+    mis_dogs = []
+    for idx in [11731]:  # 2, 4334
+        mis_dogs.append(dogs[idx])
+    cats = np.append(cats, mis_dogs, 0)
+
+    indice = [11222, 1450, 2159, 3822, 4104, 5355, 7194, 7920, 9250, 9444, 9882]:  # 11
+    indice += [4688, 2939, 3216, 4833, 7968, 8470, 10712, 11184, 7564, 8456, 5418, 9171, 5351, 7377, 11565]  # 15
+    cats = np.delete(cats, indice, 0)
+
+    indice = [1308, 1895, 9188, 10161, 10190, 11186, 10747, 2614, 4367, 8736, 12376, 1773, 10237, 1043, 1194, 5604, 9517, 10797, 2877, 8898]:  # 20
+    indice += [11538, 11724, 8507, 11731, 4334]  # 5
+    dogs = np.delete(dogs, indice, 0)
+    return cats, dogs
+
+
 def before_save(file_or_dir):
     """
     make sure that the dedicated path exists (create if not exist)
@@ -128,6 +146,7 @@ def maybe_preprocess(train=True, ratio=None):
     if ratio is not None:
         cats = [images[i] for i, label in enumerate(labels) if label == 0]
         dogs = [images[i] for i, label in enumerate(labels) if label == 1]
+        cats, dogs = clean_data(cats, dogs)
         cat_train, cat_valid = split_data(cats, [1 - ratio, ratio])
         dog_train, dog_valid = split_data(dogs, [1 - ratio, ratio])
         images = cat_train + dog_train
