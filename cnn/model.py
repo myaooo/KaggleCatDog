@@ -253,6 +253,7 @@ def model5(name=''):
 
 def model6(name=''):
     # test resnet
+    print(N)
     model = ConvNet(name or 'ResNet2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
