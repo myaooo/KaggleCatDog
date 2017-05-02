@@ -241,7 +241,7 @@ def model5(name=''):
     # model.push_fully_connected_layer(512, activation='linear', has_bias=True)
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 1e-5)
+    model.set_regularizer('l2', 1e-4)
     model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[30*N//BATCH_SIZE, 50*N//BATCH_SIZE, 65*N//BATCH_SIZE],
                             values=[0.1, 0.01, 0.001, 0.0001])
     #                         values=[0.02, 0.002, 0.0002, 0.00002])  # boundaries=[40000, 52000, 64000]
@@ -286,7 +286,7 @@ def model6(name=''):
     # model.push_fully_connected_layer(512, activation='linear', has_bias=True)
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 1e-5)
+    model.set_regularizer('l2', 1e-4)
     model.set_learning_rate(0.01, 'piecewise_constant', boundaries=[30*N//BATCH_SIZE, 50*N//BATCH_SIZE, 65*N//BATCH_SIZE],
                             values=[0.1, 0.01, 0.001, 0.0001])
     #                         values=[0.02, 0.002, 0.0002, 0.00002])  # boundaries=[40000, 52000, 64000]
