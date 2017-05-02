@@ -21,7 +21,7 @@ tf.app.flags.DEFINE_string('train', '',
 
 # num_epochs = 45
 EVAL_FREQUENCY = 1
-N = N
+N = 20000
 
 def build_model(model_no, name, train_data_generator, valid_data_generator):
     models = [model1, model2, model3b, model4, model5, model6]
@@ -208,6 +208,7 @@ def model4(name=''):
 
 def model5(name=''):
     # test resnet
+    print(N)
     model = ConvNet(name or 'ResNIN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
@@ -296,7 +297,7 @@ def model6(name=''):
 
 def main():
     init_tf_environ(gpu_num=1)
-    N = 25000 if FLAGS.train == 'all' else N
+    N = 25000 if FLAGS.train == 'all' else 20000
     all_data = prep_data(test=False, all=FLAGS.train == 'all')
     model = build_model(FLAGS.model, FLAGS.name, *all_data[:2])
     # rec = ConvRecorder(model, get_path('models', 'lenet/train'))
