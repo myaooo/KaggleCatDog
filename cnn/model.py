@@ -209,7 +209,7 @@ def model4(name=''):
 def model5(name=''):
     # test resnet
     print(N)
-    model = ConvNet(name or 'ResNIN')
+    model = ConvNet(name or 'ResBN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
     # model.push_batch_norm_layer(activation='relu')
@@ -219,21 +219,21 @@ def model5(name=''):
     model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('max', [2, 2], strides=[2, 2])
-    model.push_res_nin_layer([3, 3], 64, strides=[1, 1], activation='relu', activate_before_residual=False)
+    model.push_res_bn_layer([3, 3], 128, strides=[1, 1], activation='relu', activate_before_residual=False)
     for i in range(2):
-        model.push_res_nin_layer([3, 3], 64, strides=[1, 1], activation='relu')
+        model.push_res_bn_layer([3, 3], 128, strides=[1, 1], activation='relu')
     model.push_batch_norm_layer(activation='relu')
-    model.push_res_nin_layer([3, 3], 128, strides=[2, 2], activation='relu', activate_before_residual=False)
+    model.push_res_bn_layer([3, 3], 256, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(3):
-        model.push_res_nin_layer([3, 3], 128, strides=[1, 1], activation='relu')
+        model.push_res_bn_layer([3, 3], 256, strides=[1, 1], activation='relu')
     model.push_batch_norm_layer(activation='relu')
-    model.push_res_nin_layer([3, 3], 256, strides=[2, 2], activation='relu', activate_before_residual=False)
-    for i in range(6):
-        model.push_res_nin_layer([3, 3], 256, strides=[1, 1], activation='relu')
+    model.push_res_bn_layer([3, 3], 512, strides=[2, 2], activation='relu', activate_before_residual=False)
+    for i in range(8):
+        model.push_res_bn_layer([3, 3], 512, strides=[1, 1], activation='relu')
     model.push_batch_norm_layer(activation='relu')
-    model.push_res_nin_layer([3, 3], 512, strides=[2, 2], activation='relu', activate_before_residual=False)
+    model.push_res_bn_layer([3, 3], 1024, strides=[2, 2], activation='relu', activate_before_residual=False)
     for i in range(2):
-        model.push_res_nin_layer([3, 3], 512, strides=[1, 1], activation='relu')
+        model.push_res_bn_layer([3, 3], 1024, strides=[1, 1], activation='relu')
     model.push_batch_norm_layer(activation='relu')
     model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)],
                           strides=[int(IMG_SIZE[0] / 16), int(IMG_SIZE[1] / 16)])
@@ -298,7 +298,8 @@ def model6(name=''):
 
 def main():
     init_tf_environ(gpu_num=1)
-    N = 25000 if FLAGS.train == 'all' else 20000
+    if FLAGS.train == 'all':
+        N = 25000
     all_data = prep_data(test=False, all=FLAGS.train == 'all')
     model = build_model(FLAGS.model, FLAGS.name, *all_data[:2])
     # rec = ConvRecorder(model, get_path('models', 'lenet/train'))

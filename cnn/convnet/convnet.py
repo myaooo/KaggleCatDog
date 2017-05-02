@@ -435,10 +435,10 @@ class ResLayer(Layer):
         return self._is_compiled
 
 
-class ResNINLayer(ResLayer):
+class ResBottleNeckLayer(ResLayer):
     def __init__(self, filter_size, out_channels, strides, name_or_scope, padding='SAME', activation='relu',
                  activate_before_residual=True, decay=0.99, epsilon=0.001):
-        super(ResNINLayer, self).__init__(filter_size, out_channels, strides, name_or_scope, padding, activation,
+        super(ResBottleNeckLayer, self).__init__(filter_size, out_channels, strides, name_or_scope, padding, activation,
                  activate_before_residual, decay, epsilon)
 
     def compile(self):
@@ -453,12 +453,12 @@ class ResNINLayer(ResLayer):
         if self.activate_before_residual:
             self.net1.append(BatchNormLayer(self.net1.name_or_scope + '_bn0', decay=self.decay,
                                             epsilon=self.epsilon, activation=self.activation))
-        self.net1.append(ConvLayer(self._filter_size, out_channels, self.strides,
+        self.net1.append(ConvLayer([1, 1], out_channels/4, self.strides,
                                    self.net1.name_or_scope + '_conv1', activation='linear',
                                    has_bias=False))
         self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn1', decay=self.decay,
                                         epsilon=self.epsilon, activation=self.activation))
-        self.net1.append(ConvLayer([1, 1], out_channels, [1, 1],
+        self.net1.append(ConvLayer(self._filter_size, out_channels/4, [1, 1],
                                    self.net1.name_or_scope + '_conv2', activation='linear',
                                    has_bias=False))
         self.net1.append(BatchNormLayer(self.net1.name_or_scope + 'bn2', decay=self.decay,
@@ -627,11 +627,11 @@ class ConvNet(SequentialNet, Classifier):
         self.push_back(ResLayer(filter_size, out_channels, strides, layer_name, padding, activation=activation,
                                 activate_before_residual=activate_before_residual, decay=decay, epsilon=epsilon))
 
-    def push_res_nin_layer(self, filter_size, out_channels, strides, padding='SAME', activation='relu',
+    def push_res_bn_layer(self, filter_size, out_channels, strides, padding='SAME', activation='relu',
                        activate_before_residual=True, decay=0.9, epsilon=0.001):
         layer_name = 'res' + str(self.size)
         self.layers.append(layer_name)
-        self.push_back(ResNINLayer(filter_size, out_channels, strides, layer_name, padding, activation=activation,
+        self.push_back(ResBottleNeckLayer(filter_size, out_channels, strides, layer_name, padding, activation=activation,
                                 activate_before_residual=activate_before_residual, decay=decay, epsilon=epsilon))
 
     def set_regularizer(self, regularizer=None, scale=0):
