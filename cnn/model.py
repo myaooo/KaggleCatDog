@@ -21,7 +21,6 @@ tf.app.flags.DEFINE_string('train', '',
 
 # num_epochs = 45
 EVAL_FREQUENCY = 1
-N = 20000
 
 def build_model(model_no, name, train_data_generator, valid_data_generator):
     models = [model1, model2, model3b, model4, model5, model6]
@@ -55,6 +54,7 @@ def model1(name=''):
 
 def model2(name=''):
     # Network in Network
+    N = 24950 if FLAGS.train == 'all' else 20000
     model = ConvNet(name or 'NIN-test')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
@@ -87,7 +87,7 @@ def model2(name=''):
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 1e-5)
+    model.set_regularizer('l2', 1e-4)
     model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[20*N//BATCH_SIZE, 30*N//BATCH_SIZE, 40*N//BATCH_SIZE], 
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', 0.9)
@@ -99,6 +99,7 @@ def model2(name=''):
 
 def model3(name=''):
     # Network in Network
+    N = 24950 if FLAGS.train == 'all' else 20000
     model = ConvNet(name or 'NIN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='relu')
@@ -129,6 +130,7 @@ def model3(name=''):
 
 def model3b(name=''):
     # Network in Network
+    N = 24950 if FLAGS.train == 'all' else 20000
     model = ConvNet(name or 'NIN-test')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
@@ -170,6 +172,7 @@ def model3b(name=''):
 
 def model4(name=''):
     # test resnet
+    N = 24950 if FLAGS.train == 'all' else 20000
     model = ConvNet(name or 'ResNet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
@@ -208,7 +211,7 @@ def model4(name=''):
 
 def model5(name=''):
     # test resnet
-    print(N)
+    N = 24950 if FLAGS.train == 'all' else 20000
     model = ConvNet(name or 'ResBN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
@@ -253,7 +256,7 @@ def model5(name=''):
 
 def model6(name=''):
     # test resnet
-    print(N)
+    N = 24950 if FLAGS.train == 'all' else 20000
     model = ConvNet(name or 'ResNet2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
     # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)

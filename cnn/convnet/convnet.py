@@ -810,7 +810,7 @@ class ConvNet(SequentialNet, Classifier):
                 epoch_loss += _loss
                 local_loss += _loss
                 # Maybe print log
-                if (step + 1) % (batch_per_epoch // 10) == 0:
+                if (step + 1) % (batch_per_epoch // 10) == 0 or (step + 1) % batch_per_epoch == 0:
                     # test_step = tf.train.global_step(sess, self.global_step)
                     cur_epoch = step // batch_per_epoch
                     batch = (step % batch_per_epoch) + 1
@@ -823,7 +823,7 @@ class ConvNet(SequentialNet, Classifier):
                                                       lr, time.time() - step_time)
                     losses.append(local_loss / (batch_per_epoch // 10))
                     local_loss = 0
-                    if (step + 1) % eval_frequency == 0:
+                    if (step + 1) % batch_per_epoch == 0:
                         # Do evaluation
                         loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
                         add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
