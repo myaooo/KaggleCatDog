@@ -838,7 +838,7 @@ class ConvNet(SequentialNet, Classifier):
                     print("average training loss: {:.4f}".format(epoch_loss / batch_per_epoch))
                     loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
                     valid_losses.append(loss)
-                    print('Time: {.2f}s, Loss: {:3f}, Acc: {:.2f}%, eval num: {d}'.format(
+                    print('Time: {:.2f}s, Loss: {:.3f}, Acc: {:.2f}%, eval num: {:d}'.format(
                           time.time() - epoch_time, loss, acc*100, eval_size))
                     print('{:*^30}'.format('Epoch {:>2} Done'.format(cur_epoch)))
                     epoch_loss = 0
