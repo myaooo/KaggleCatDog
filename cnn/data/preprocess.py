@@ -15,7 +15,7 @@ PREPROCESSED = os.path.join(DATA_ROOT, 'preprocessed/')
 TRAIN_DIR = os.path.join(PREPROCESSED, 'train/')
 TEST_DIR = os.path.join(PREPROCESSED, 'test/')
 
-IMG_SIZE = (128, 128)
+IMG_SIZE = (256, 256)
 CHANNELS = 3
 NUM_LABELS = 2
 BATCH_SIZE = 50
@@ -178,7 +178,7 @@ def maybe_calculate(filename, cal_fn, *args, **kwargs):
         results = cal_fn(*args, **kwargs)
         before_save(filename)
         with open(filename, 'wb') as f:
-            pickle.dump(results, f)
+            pickle.dump(results, f, protocol=4)
     return results
 
 
