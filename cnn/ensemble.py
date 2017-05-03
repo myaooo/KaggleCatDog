@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from sklearn.linear_model import LogisticRegression
 
 from cnn.data.preprocess import BATCH_SIZE
 from cnn.convnet.utils import init_tf_environ, get_path
@@ -17,9 +18,11 @@ tf.app.flags.DEFINE_string('dataset', 'valid',
                            """which set of data to run""")
 tf.app.flags.DEFINE_string('out', 'submissions/ensemble.csv',
                            """the path to the output""")
+tf.app.flags.DEFINE_boolean('lr', False,
+                           """Whether using logistic regression as aggregate learner""")
 
 
-def ensemble_predict(data_generator, models):
+def ensemble_predict(data_generator, models, weights=None):
     # n_model = len(models)
     predictions = []
     logits = []
@@ -27,9 +30,35 @@ def ensemble_predict(data_generator, models):
         logit, prediction = model.infer(model.sess, data_generator, batch_size=BATCH_SIZE)
         predictions.append(prediction)
         logits.append(logit)
-    predictions = np.stack(predictions)
-    prediction = np.mean(predictions, axis=0)
+    if weights is None:
+        predictions = np.stack(predictions)
+        prediction = np.mean(predictions, axis=0)
+    else:
+        for i in range(len(models)):
+            predictions[i] = predictions[i] * weights[:, i]
+        predictions = np.stack(predictions)
+        prediction = np.sum(predictions, axis=0)
     return prediction
+
+
+def ensemble_learn(train_data_generator, models):
+    # n_model = len(models)
+    # learn
+    train_predictions = []
+    logits = []
+    for model in models:
+        logit, prediction = model.infer(model.sess, train_data_generator, batch_size=BATCH_SIZE)
+        train_predictions.append(prediction)
+        logits.append(logit)
+    train_predictions = np.stack(train_predictions)
+    labels = train_data_generator.Y
+    solver = LogisticRegression(C=0.1, penalty='l2', tol=0.05)
+    solver.fit(X, y)
+
+    coef = solver.coef_.ravel()
+    print("The coeficient of the models are:")
+    print(coef)
+    return coef
 
 
 def cal_loss(predictions, labels):
@@ -47,10 +76,10 @@ def cal_acc(predictions, labels):
     return right_guess / len(labels)
 
 
-def ensemble_eval(data_generator, models):
+def ensemble_eval(predictions, labels):
 
-    predictions = ensemble_predict(data_generator, models)
-    labels = data_generator.y
+    # predictions = ensemble_predict(data_generator, models, weights=None)
+    # labels = data_generator.y
     ensemble_loss = cal_loss(predictions, labels)
     ensemble_acc = cal_acc(predictions, labels)
     print('ensemble loss:', ensemble_loss)
@@ -66,24 +95,25 @@ def ensemble_eval(data_generator, models):
 
 def main():
     init_tf_environ(gpu_num=1)
-    all_data = prep_data(test=True)
+    all_data = prep_data(test=True, all=FLAGS.train == 'all')
     models = [int(num) for num in FLAGS.models.split(',')]
     names = FLAGS.names.split(',')
     dataset = FLAGS.dataset
     cnns = []
+    weights = None
     for model, name in zip(models, names):
         cnn = build_model(model, name, *all_data[:2])
         cnn.restore()
         cnns.append(cnn)
+    if FLAGS.lr:
+        weights = ensemble_learn(all_data[0], models)
+    d = 0 if dataset == 'train' else 1 if dataset == 'valid' else 2
+    predictions = ensemble_predict(all_data[d], cnns, weights)
     if dataset == 'test':
-        predictions = ensemble_predict(all_data[2], cnns)
         generate_submission(predictions[:, 1], get_path(FLAGS.out))
         return
-    elif dataset == 'train':
-        d = 0
-    else:
-        d = 1
-    ensemble_eval(all_data[d], cnns)
+    ensemble_eval(predictions, all_data[d].y)
+    
 
 
 if __name__ == '__main__':
