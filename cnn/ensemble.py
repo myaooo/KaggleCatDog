@@ -48,12 +48,12 @@ def ensemble_learn(train_data_generator, models):
     logits = []
     for model in models:
         logit, prediction = model.infer(model.sess, train_data_generator, batch_size=BATCH_SIZE)
-        train_predictions.append(prediction)
+        train_predictions.append(prediction[:, 1])
         logits.append(logit)
-    train_predictions = np.stack(train_predictions)
-    labels = train_data_generator.Y
-    solver = LogisticRegression(C=0.1, penalty='l2', tol=0.05)
-    solver.fit(X, y)
+    train_predictions = np.stack(train_predictions).T
+    labels = train_data_generator.y
+    solver = LogisticRegression(C=10000, penalty='l2', tol=0.05)
+    solver.fit(train_predictions, labels)
 
     coef = solver.coef_.ravel()
     print("The coeficient of the models are:")
@@ -95,7 +95,7 @@ def ensemble_eval(predictions, labels):
 
 def main():
     init_tf_environ(gpu_num=1)
-    all_data = prep_data(test=True, all=FLAGS.train == 'all')
+    all_data = prep_data(test=True, all=FLAGS.train == 'all', shuffle=False)
     models = [int(num) for num in FLAGS.models.split(',')]
     names = FLAGS.names.split(',')
     dataset = FLAGS.dataset
@@ -106,7 +106,7 @@ def main():
         cnn.restore()
         cnns.append(cnn)
     if FLAGS.lr:
-        weights = ensemble_learn(all_data[0], models)
+        weights = ensemble_learn(all_data[0], cnns)
     d = 0 if dataset == 'train' else 1 if dataset == 'valid' else 2
     predictions = ensemble_predict(all_data[d], cnns, weights)
     if dataset == 'test':
