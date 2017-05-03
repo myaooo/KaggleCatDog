@@ -182,7 +182,7 @@ def maybe_calculate(filename, cal_fn, *args, **kwargs):
     return results
 
 
-def prep_data(valid_ratio=4950.0/24950, test=False, all=False):
+def prep_data(valid_ratio=4950.0/24950, test=False, all=False, shuffle=True):
     assert 0 < valid_ratio < 1
     train_file = os.path.join(DATA_ROOT, 'tmp/train.pkl')
     train, valid = maybe_calculate(train_file, maybe_preprocess, True, valid_ratio)
@@ -191,7 +191,7 @@ def prep_data(valid_ratio=4950.0/24950, test=False, all=False):
     if all:
         train_data = np.vstack([train_data, valid_data])
         train_labels = np.hstack([train_labels, valid_labels])
-    train = generate_data(train_data, train_labels, BATCH_SIZE, True)
+    train = generate_data(train_data, train_labels, BATCH_SIZE, shuffle)
     valid = generate_data(valid_data, valid_labels, BATCH_SIZE, False)
     test_data = None
     if test:
@@ -248,10 +248,10 @@ def generate_data(X, y, batch_size=32, train=True):
     # if False:
         datagen = ImageDataGenerator(
             rotation_range=20,
-            width_shift_range=0.1,
-            height_shift_range=0.1,
-            shear_range=0.1,
-            zoom_range=0.1,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            shear_range=0.2,
+            zoom_range=0.2,
             horizontal_flip=True,
             # vertical_flip=True,
             # samplewise_center=True,
