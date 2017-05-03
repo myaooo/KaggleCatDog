@@ -34,7 +34,7 @@ def ensemble_predict(data_generator, models, weights=None):
         predictions = np.stack(predictions)
         prediction = np.mean(predictions, axis=0)
     else:
-	weights = weights / np.sum(weights)
+        weights = weights / np.sum(weights)
         for i in range(len(models)):
             predictions[i] = predictions[i] * weights[i]
         predictions = np.stack(predictions)
