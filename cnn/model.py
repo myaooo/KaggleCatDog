@@ -87,7 +87,7 @@ def model2(name=''):
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 1e-4)
+    model.set_regularizer('l2', 2e-5)
     model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[20*N//BATCH_SIZE, 30*N//BATCH_SIZE, 40*N//BATCH_SIZE], 
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', 0.9)
