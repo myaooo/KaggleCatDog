@@ -172,6 +172,7 @@ def maybe_calculate(filename, cal_fn, *args, **kwargs):
     :return: the pickle dumped object, if cache file exists, else return the return value of cal_fn
     """
     if os.path.isfile(filename):
+        print("Reading from tmp file", filename)
         with open(filename, 'rb') as f:
             results = pickle.loads(f.read())
     else:

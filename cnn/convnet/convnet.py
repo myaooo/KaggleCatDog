@@ -690,10 +690,10 @@ class ConvNet(SequentialNet, Classifier):
         :param test_data_generator:
         :return:
         """
-        assert train_data_generator.n % train_data_generator.batch_size == 0
+        # assert train_data_generator.n % train_data_generator.batch_size == 0
         self.train_data_generator = train_data_generator
-        if test_data_generator is not None:
-            assert test_data_generator.n % test_data_generator.batch_size == 0
+        # if test_data_generator is not None:
+            # assert test_data_generator.n % test_data_generator.batch_size == 0
         self.test_data_generator = test_data_generator
 
     def _cal_loss(self, logits, labels_node, name):
@@ -908,7 +908,7 @@ class ConvNet(SequentialNet, Classifier):
             return loss, acc, acc5
         else:
             loss = acc = acc5 = 0
-            batch_num = math.ceil(data_generator.n / data_generator.batch_size)
+            batch_num = data_generator.n // data_generator.batch_size
             for i in range(0, data_generator.n, data_generator.batch_size):
                 data, label = data_generator.next()
                 loss_, acc_, acc5_ = sess.run([self.eval_loss, self.acc, self.acc5],
@@ -944,11 +944,11 @@ class ConvNet(SequentialNet, Classifier):
 
     @property
     def train_size(self):
-        return self.train_data_generator.n
+        return self.train_data_generator.n // self.train_data_generator.batch_size * self.train_data_generator.batch_size
 
     @property
     def test_size(self):
-        return self.test_data_generator.n
+        return self.test_data_generator.n // self.test_data_generator.batch_size * self.test_data_generator.batch_size
 
     def save(self, sess=None, path=None):
         """
