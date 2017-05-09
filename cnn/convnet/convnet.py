@@ -70,6 +70,56 @@ class InputLayer(Layer):
         return True
 
 
+class AugmentLayer(Layer):
+    def __init__(self, padding=0, crop=0, horizontal_flip=False, per_image_standardize=False, name=None):
+        super().__init__(name or "augment")
+        self.padding = padding
+        self.crop = crop
+        self.horizontal_flip = horizontal_flip
+        self.per_image_standardize=per_image_standardize
+        self._shape = None
+
+    def __call__(self, input_, train=False, name=''):
+        prev_shape = self.prev.output_shape
+        if train:
+            if self.padding > 0:
+                input_ = tf.image.resize_image_with_crop_or_pad(
+                    input_, prev_shape[0] + self.padding, prev_shape[1] + self.padding)
+            if self.crop > 0:
+                input_ = tf.map_fn(lambda img: tf.random_crop(img, self.output_shape), input_)
+            if self.horizontal_flip:
+                input_ = tf.map_fn(lambda img: tf.image.random_flip_left_right(img), input_)
+        # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
+        # image = tf.image.random_brightness(image, max_delta=63. / 255.)
+        # image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
+        # image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+        else:
+            diff = self.padding - self.crop
+            if diff != 0:
+                input_ = tf.image.resize_image_with_crop_or_pad(input_, self.output_shape[0], self.output_shape[1])
+        if self.per_image_standardize:
+            input_ = tf.map_fn(tf.image.per_image_standardization, input_)
+        return input_
+
+    def compile(self):
+        pass
+
+    @property
+    def output_shape(self):
+        if self._shape is None:
+            prev_shape = self.prev.output_shape
+            diff = self.padding - self.crop
+            self._shape = [prev_shape[0] + diff, prev_shape[1] + diff, prev_shape[2]]
+        return self._shape
+
+    @property
+    def is_compiled(self):
+        """
+        No need to compile
+        """
+        return True
+
+
 class ConvLayer(Layer):
     """Input Layer"""
 
@@ -347,9 +397,11 @@ class BatchNormLayer(Layer):
         return self._output_shape
 
     def __call__(self, input_, train=True, name=''):
-        with tf.variable_scope(self.name_or_scope):
+        super().__call__(input, train)
+        reuse = True if self.n_calls > 1 else None
+        with tf.variable_scope(self.name_or_scope, reuse=reuse):
             results = tf.contrib.layers.batch_norm(input_, decay=self.decay, epsilon=self.epsilon, scale=True,
-                                                   is_training=train, reuse=True, scope='bn_op',
+                                                   is_training=train, reuse=reuse, scope='bn_op',
                                                    variables_collections=local_keys)
             return get_activation(self.activation)(results)
 
@@ -551,6 +603,21 @@ class ConvNet(SequentialNet, Classifier):
         self.train_labels_node = tf.placeholder(Int, shape=(dshape[0],))
         self.eval_data_node = tf.placeholder(self.dtype, shape=(None, dshape[1], dshape[2], dshape[3]))
         self.eval_labels_node = tf.placeholder(Int, shape=(None,))
+
+    def push_augment_layer(self, padding=0, crop=0, horizontal_flip=False, per_image_standardize=False):
+        """
+        Push a convolutional layer at the back of the layer list.
+        :param filter_size: should be a (x,y) shaped tuple
+        :param out_channels: the depth (number of filter) within the layer
+        :param strides: a list of int with size 4 indicating filter strides, e.g., [1,2,2,1]
+        :param padding: padding algorithm, could be 'SAME' or 'VALID'
+        :param activation: TensorFlow activation type default to 'linear', frequent use include 'relu'
+        :param has_bias: default to be True
+        :return: None
+        """
+        layer_name = 'augment' + str(self.size)
+        self.layers.append(layer_name)
+        self.push_back(AugmentLayer(padding, crop, horizontal_flip, per_image_standardize, layer_name))
 
     def push_conv_layer(self, filter_size, out_channels, strides, padding='SAME', activation='linear', has_bias=False):
         """

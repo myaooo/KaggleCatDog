@@ -35,6 +35,7 @@ def model1(name=''):
     # Network in Network
     model = ConvNet(name or 'NIN-test')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
+    model.push_augment_layer(4, 4, True, True)
     model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
