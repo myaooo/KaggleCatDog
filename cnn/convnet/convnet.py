@@ -21,7 +21,7 @@ from cnn.convnet.message_protoc.log_message import create_training_log_message, 
     log_beautiful_print
 
 SEED = None
-_EVAL_BATCH_SIZE = 100
+# _EVAL_BATCH_SIZE = 100
 
 Float32 = tf.float32
 Float64 = tf.float64
@@ -328,7 +328,7 @@ class FullyConnectedLayer(Layer):
 
 
 class BatchNormLayer(Layer):
-    def __init__(self, name_or_scope, decay=0.99, epsilon=0.001, activation='linear'):
+    def __init__(self, name_or_scope, decay=0.9, epsilon=0.001, activation='linear'):
         super(BatchNormLayer, self).__init__('batch_norm')
         self._output_shape = None
         self.name_or_scope = name_or_scope
@@ -360,7 +360,7 @@ class BatchNormLayer(Layer):
 
 class ResLayer(Layer):
     def __init__(self, filter_size, out_channels, strides, name_or_scope, padding='SAME', activation='relu',
-                 activate_before_residual=True, decay=0.99, epsilon=0.001):
+                 activate_before_residual=True, decay=0.9, epsilon=0.001):
         super(ResLayer, self).__init__('res')
         self._filter_size = filter_size
         self._out_channels = out_channels
@@ -437,7 +437,7 @@ class ResLayer(Layer):
 
 class ResBottleNeckLayer(ResLayer):
     def __init__(self, filter_size, out_channels, strides, name_or_scope, padding='SAME', activation='relu',
-                 activate_before_residual=True, decay=0.99, epsilon=0.001):
+                 activate_before_residual=True, decay=0.9, epsilon=0.001):
         super(ResBottleNeckLayer, self).__init__(filter_size, out_channels, strides, name_or_scope, padding, activation,
                  activate_before_residual, decay, epsilon)
 
@@ -507,13 +507,14 @@ class ConvNet(SequentialNet, Classifier):
         self.logits = None
         self.loss = None
         self.loss_func = None
+        self.acc = None
 
         # Evaluation node
         self.eval_loss = None
         self.eval_logits = None
         self.eval_prediction = None
-        self.acc = None
-        self.acc5 = None
+        self.eval_acc = None
+        self.eval_acc3 = None
 
         self.graph = tf.Graph()
         # Optimization node
@@ -725,6 +726,8 @@ class ConvNet(SequentialNet, Classifier):
     
                 # computation node for training ops
                 self.logits = self.model(self.train_data_node, train=True)
+                self.prediction = tf.nn.softmax(self.logits)
+                self.acc = self.top_k_acc(self.prediction, self.train_labels_node, 1, name='train_acc')
                 self.loss = self._cal_loss(self.logits, self.train_labels_node, 'regularized_loss')
     
                 tf.summary.scalar('loss', self.loss)
@@ -742,8 +745,8 @@ class ConvNet(SequentialNet, Classifier):
                         # prediction
                         self.eval_prediction = tf.nn.softmax(self.eval_logits, name='prediction')
                         # accuracy
-                        self.acc = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 1, name='acc')
-                        self.acc5 = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 5, name='acc5')
+                        self.eval_acc = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 1, name='acc')
+                        self.eval_acc3 = self.top_k_acc(self.eval_prediction, self.eval_labels_node, 5, name='acc3')
 
         # check requirements for training
         assert self.train_data_generator is not None
@@ -798,18 +801,22 @@ class ConvNet(SequentialNet, Classifier):
         epoch_time = step_time = start_time = time.time()
         sess = self.sess
         losses = []
+        accs = []
         valid_losses = []
+        valid_accs = []
         counter = 10
         with self.graph.as_default():
             epoch_loss = 0
+            local_acc = 0
             local_loss = 0
             for step in range(total_step):
                 # Get next train batch
                 feed_dict = self.feed_dict()
                 # Train one batch
-                _, _loss = sess.run([self.optimizer_op, self.loss], feed_dict)
+                _, _loss, _acc = sess.run([self.optimizer_op, self.loss, self.acc], feed_dict)
                 epoch_loss += _loss
                 local_loss += _loss
+                local_acc += _acc
                 # Maybe print log
                 if (step + 1) % (batch_per_epoch // counter) == 0:
                     counter += 0
@@ -821,14 +828,17 @@ class ConvNet(SequentialNet, Classifier):
                         lr = sess.run(self.learning_rate, feed_dict)
                     # local_loss = sess.run(self.loss, feed_dict)
                     msg = create_training_log_message(cur_epoch, batch, batch_per_epoch,
-                                                      float(local_loss / (batch_per_epoch // 10)),
+                                                      float(local_loss / (batch_per_epoch // counter)), local_acc / (batch_per_epoch // counter),
                                                       lr, time.time() - step_time)
-                    losses.append(local_loss / (batch_per_epoch // 10))
+                    # print()
+                    losses.append(local_loss / (batch_per_epoch // counter))
+                    accs.append(local_acc / (batch_per_epoch // counter))
+                    local_acc = 0
                     local_loss = 0
                     # if counter % batch_per_epoch == 0:
                         # Do evaluation
-                        # loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
-                        # add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc5),
+                        # loss, acc, acc3 = self.eval(sess, self.test_data_generator, batch_size)
+                        # add_evaluation_log_message(msg.eval_message, float(loss), float(acc), float(acc3),
                         #                            time.time() - epoch_time, eval_size)
                         # valid_losses.append(loss)
                     log_beautiful_print(msg)
@@ -836,10 +846,10 @@ class ConvNet(SequentialNet, Classifier):
 
                 if (step + 1) % batch_per_epoch == 0:
                     print("average training loss: {:.4f}".format(epoch_loss / batch_per_epoch))
-                    loss, acc, acc5 = self.eval(sess, self.test_data_generator, batch_size)
+                    loss, acc, acc3 = self.eval(sess, self.test_data_generator, batch_size)
                     valid_losses.append(loss)
-                    print('Time: {:.2f}s, Loss: {:.3f}, Acc: {:.2f}%, eval num: {:d}'.format(
-                          time.time() - epoch_time, loss, acc*100, eval_size))
+                    print('Time: {:.2f}s, Loss: {:.3f}, Acc: {:.2f}%, Acc3: {:.2f}%, eval num: {:d}'.format(
+                          time.time() - epoch_time, loss, acc*100, acc3*100, eval_size))
                     print('{:*^30}'.format('Epoch {:>2} Done'.format(cur_epoch)))
                     epoch_loss = 0
                     epoch_time = time.time()
@@ -903,20 +913,20 @@ class ConvNet(SequentialNet, Classifier):
             assert data is not None and labels is not None
             logits, predictions = self.infer_in_batches(sess, data, batch_size)
             loss = sess.run(self.eval_loss, {self.eval_logits: logits, self.eval_labels_node: labels})
-            acc, acc5 = sess.run([self.acc, self.acc5],
+            acc, acc3 = sess.run([self.eval_acc, self.eval_acc3],
                                  {self.eval_prediction: predictions, self.eval_labels_node: labels})
-            return loss, acc, acc5
+            return loss, acc, acc3
         else:
-            loss = acc = acc5 = 0
+            loss = acc = acc3 = 0
             batch_num = data_generator.n // data_generator.batch_size
-            for i in range(0, data_generator.n, data_generator.batch_size):
+            for i in range(batch_num):
                 data, label = data_generator.next()
-                loss_, acc_, acc5_ = sess.run([self.eval_loss, self.acc, self.acc5],
+                loss_, acc_, acc3_ = sess.run([self.eval_loss, self.eval_acc, self.eval_acc3],
                                               {self.eval_data_node: data, self.eval_labels_node: label})
                 loss += loss_
                 acc += acc_
-                acc5 += acc5_
-            return loss/batch_num, acc / batch_num, acc5/batch_num
+                acc3 += acc3_
+            return loss/batch_num, acc / batch_num, acc3/batch_num
 
     def infer(self, sess, data_generator=None, data=None, batch_size=200):
         if data_generator is None:

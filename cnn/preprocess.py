@@ -47,7 +47,7 @@ def preprocess_fer2013(file):
 
 def maybe_preprocess_fer2013():
     tmp_file = get_path('data/tmp', 'dataset.pkl')
-    dataset = maybe_calculate(tmp_file, preprocess_fer2013, '../data/fer2013/fer2013.csv')
+    dataset = maybe_calculate(tmp_file, preprocess_fer2013, get_path('data/fer2013', 'fer2013.csv'))
     return dataset
 
 
@@ -65,7 +65,7 @@ def generate_data(X, y, batch_size=BATCH_SIZE, train=True):
     if train:
     # if False:
         datagen = ImageDataGenerator(
-            # rotation_range=20,
+            rotation_range=20,
             width_shift_range=0.2,
             height_shift_range=0.2,
             # shear_range=0.2,

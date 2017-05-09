@@ -19,9 +19,8 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='log_message.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x11log_message.proto\"\\\n\x11\x45valuationMessage\x12\x0c\n\x04loss\x18\x01 \x01(\x02\x12\x0b\n\x03\x61\x63\x63\x18\x02 \x01(\x02\x12\x0c\n\x04\x61\x63\x63\x35\x18\x03 \x01(\x02\x12\x0c\n\x04time\x18\x04 \x01(\x02\x12\x10\n\x08\x65val_num\x18\x05 \x01(\x05\"\x9e\x01\n\x08TrainLog\x12\r\n\x05\x65poch\x18\x01 \x01(\x05\x12\r\n\x05\x62\x61tch\x18\x02 \x01(\x05\x12\x11\n\tbatch_num\x18\x03 \x01(\x05\x12\x12\n\nbatch_loss\x18\x04 \x01(\x02\x12\x15\n\rlearning_rate\x18\x05 \x01(\x02\x12\x0c\n\x04time\x18\x06 \x01(\x02\x12(\n\x0c\x65val_message\x18\x07 \x01(\x0b\x32\x12.EvaluationMessageb\x06proto3')
+  serialized_pb=_b('\n\x11log_message.proto\"\\\n\x11\x45valuationMessage\x12\x0c\n\x04loss\x18\x01 \x01(\x02\x12\x0b\n\x03\x61\x63\x63\x18\x02 \x01(\x02\x12\x0c\n\x04\x61\x63\x63\x35\x18\x03 \x01(\x02\x12\x0c\n\x04time\x18\x04 \x01(\x02\x12\x10\n\x08\x65val_num\x18\x05 \x01(\x05\"\xb1\x01\n\x08TrainLog\x12\r\n\x05\x65poch\x18\x01 \x01(\x05\x12\r\n\x05\x62\x61tch\x18\x02 \x01(\x05\x12\x11\n\tbatch_num\x18\x03 \x01(\x05\x12\x12\n\nbatch_loss\x18\x04 \x01(\x02\x12\x11\n\tbatch_acc\x18\x05 \x01(\x02\x12\x15\n\rlearning_rate\x18\x06 \x01(\x02\x12\x0c\n\x04time\x18\x07 \x01(\x02\x12(\n\x0c\x65val_message\x18\x08 \x01(\x0b\x32\x12.EvaluationMessageb\x06proto3')
 )
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
@@ -121,22 +120,29 @@ _TRAINLOG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='learning_rate', full_name='TrainLog.learning_rate', index=4,
+      name='batch_acc', full_name='TrainLog.batch_acc', index=4,
       number=5, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='time', full_name='TrainLog.time', index=5,
+      name='learning_rate', full_name='TrainLog.learning_rate', index=5,
       number=6, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='eval_message', full_name='TrainLog.eval_message', index=6,
-      number=7, type=11, cpp_type=10, label=1,
+      name='time', full_name='TrainLog.time', index=6,
+      number=7, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='eval_message', full_name='TrainLog.eval_message', index=7,
+      number=8, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -154,12 +160,13 @@ _TRAINLOG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=116,
-  serialized_end=274,
+  serialized_end=293,
 )
 
 _TRAINLOG.fields_by_name['eval_message'].message_type = _EVALUATIONMESSAGE
 DESCRIPTOR.message_types_by_name['EvaluationMessage'] = _EVALUATIONMESSAGE
 DESCRIPTOR.message_types_by_name['TrainLog'] = _TRAINLOG
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 EvaluationMessage = _reflection.GeneratedProtocolMessageType('EvaluationMessage', (_message.Message,), dict(
   DESCRIPTOR = _EVALUATIONMESSAGE,

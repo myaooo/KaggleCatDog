@@ -58,8 +58,8 @@ def model1(name=''):
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 2e-5)
-    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[20*N//BATCH_SIZE, 30*N//BATCH_SIZE, 40*N//BATCH_SIZE], 
+    model.set_regularizer('l2', 5e-3)
+    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[10*N//BATCH_SIZE, 15*N//BATCH_SIZE, 20*N//BATCH_SIZE], 
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', 0.9)
     # model.set_learning_rate(0.001)
@@ -70,41 +70,36 @@ def model1(name=''):
 def model2(name=''):
     # Network in Network
     model = ConvNet(name or 'NIN2')
-    # model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
-    # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_pool_layer('max', [2, 2], strides=[2, 2])
-    # model.push_conv_layer(filter_size=[5, 5], out_channels=64, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_conv_layer(filter_size=[1, 1], out_channels=64, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_conv_layer(filter_size=[1, 1], out_channels=64, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_pool_layer('max', kernel_size=[1, 2, 2, 1], strides=[2, 2])
-    # model.push_conv_layer([5, 5], out_channels=128, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_conv_layer(filter_size=[1, 1], out_channels=128, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_conv_layer(filter_size=[1, 1], out_channels=128, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_pool_layer('max', kernel_size=[1, 2, 2, 1], strides=[2, 2])
-    # model.push_conv_layer([5, 5], out_channels=256, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_conv_layer(filter_size=[1, 1], out_channels=256, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_conv_layer(filter_size=[1, 1], out_channels=256, strides=[1, 1], activation='linear')
-    # model.push_batch_norm_layer(activation='relu')
-    # model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0]/8), int(IMG_SIZE[1]/8)], strides=[int(IMG_SIZE[0]/8), int(IMG_SIZE[1]/8)])
-    # model.push_flatten_layer()
-    # model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
-    #
-    # model.set_loss('sparse_softmax')
-    # model.set_regularizer('l2', 1e-5)
-    # model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[16000, 32000, 48000],
-    #                         values=[0.1, 0.01, 0.001, 0.0001])
-    # model.set_optimizer('Momentum', 0.9)
-    # model.set_learning_rate(0.001)
-    # model.set_optimizer('Adam')
+    model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
+    model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[2, 2], activation='linear', has_bias=False) 
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
+    model.push_batch_norm_layer(activation='relu')
+    model.push_pool_layer('max', [2, 2], strides=[2, 2])
+    model.push_conv_layer(filter_size=[3, 3], out_channels=64, strides=[1, 1], activation='linear')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[1, 1], out_channels=64, strides=[1, 1], activation='linear')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[1, 1], out_channels=64, strides=[1, 1], activation='linear')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_pool_layer('max', kernel_size=[2, 2], strides=[2, 2])
+    model.push_conv_layer([3, 3], out_channels=128, strides=[1, 1], activation='linear')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[1, 1], out_channels=128, strides=[1, 1], activation='linear')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_conv_layer(filter_size=[1, 1], out_channels=128, strides=[1, 1], activation='linear')
+    model.push_batch_norm_layer(activation='relu')
+    model.push_pool_layer('avg', kernel_size=[int(IMG_SIZE[0]/8), int(IMG_SIZE[1]/8)], strides=[int(IMG_SIZE[0]/8), int(IMG_SIZE[1]/8)])
+    model.push_flatten_layer()
+    model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
+
+    model.set_loss('sparse_softmax')
+    model.set_regularizer('l2', 5e-3)
+    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[20*N//BATCH_SIZE, 30*N//BATCH_SIZE, 40*N//BATCH_SIZE], 
+                            values=[0.1, 0.01, 0.001, 0.0001])
+    model.set_optimizer('Momentum', 0.9)
     return model
 
 
@@ -117,7 +112,7 @@ def model3(name=''):
     model.push_batch_norm_layer(activation='relu')
     # model.push_pool_layer('max', [2, 2], strides=[2, 2])
     model.push_res_layer([3, 3], 32, strides=[1, 1], activation='relu', activate_before_residual=False)
-    for i in range(3):
+    for i in range(2):
         model.push_res_layer([3, 3], 32, strides=[1, 1], activation='relu')
     model.push_batch_norm_layer(activation='relu')
     model.push_res_layer([3, 3], 64, strides=[2, 2], activation='relu', activate_before_residual=False)
@@ -137,9 +132,9 @@ def model3(name=''):
     model.push_flatten_layer()
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 1e-5)
+    model.set_regularizer('l2', 2e-3)
     model.set_learning_rate(0.01, 'piecewise_constant',
-                            boundaries=[20 * N // BATCH_SIZE, 30 * N // BATCH_SIZE, 40 * N // BATCH_SIZE],
+                            boundaries=[10 * N // BATCH_SIZE, 15 * N // BATCH_SIZE, 20 * N // BATCH_SIZE],
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', momentum=0.9)
     # model.set_learning_rate(0.1)  # 0.001 for RMSProp
@@ -242,8 +237,8 @@ def main():
     # rec = ConvRecorder(model, get_path('models', 'lenet/train'))
     losses, valid_losses = model.train(BATCH_SIZE, FLAGS.epoch, EVAL_FREQUENCY)
     model.save()
-    total_steps = FLAGS.epoch * all_data[0].n // BATCH_SIZE
-    log_step = all_data[0].n // BATCH_SIZE // 10
+    total_steps = FLAGS.epoch * all_data['train'].n // BATCH_SIZE
+    log_step = all_data['train'].n // BATCH_SIZE // 10
     train_steps = range(0, total_steps, log_step)
     valid_steps = range(0, total_steps, log_step * 10)
     train_log_file = get_path('log', model.name_or_scope + '_train.csv')

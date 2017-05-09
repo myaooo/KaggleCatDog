@@ -1,12 +1,13 @@
 from . import log_message_pb2 as message
 
 
-def create_training_log_message(epoch, batch, batch_num, epoch_loss, learning_rate, time, **kwargs):
+def create_training_log_message(epoch, batch, batch_num, epoch_loss, batch_acc, learning_rate, time, **kwargs):
     msg = message.TrainLog()
     msg.epoch = epoch
     msg.batch = batch
     msg.batch_num = batch_num
     msg.batch_loss = epoch_loss
+    msg.batch_acc = batch_acc
     msg.learning_rate = learning_rate
     msg.time = time
 
@@ -25,8 +26,9 @@ def add_evaluation_log_message(eval_msg, loss, acc, acc5, time, eval_num):
 def log_beautiful_print(train_message):
     out = '[Epoch {:>2}]'.format(train_message.epoch)
     out += '(batch{:>3}/{:>3}) '.format(train_message.batch, train_message.batch_num)
-    out += 'Time: {:.2f}s, Epoch Loss: {:.3f}, lr: {:.4f}'.format(train_message.time,
+    out += 'Time: {:.1f}s, Loss: {:.3f}, Acc: {:.2%}, lr: {:.4f}'.format(train_message.time,
                                                               train_message.batch_loss,
+                                                              train_message.batch_acc,
                                                               train_message.learning_rate)
     print(out)
     if train_message.HasField('eval_message'):
