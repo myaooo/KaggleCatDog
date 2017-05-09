@@ -231,6 +231,12 @@ def model5(name=''):
     return model
 
 
+def eval(model, data_generator):
+
+    loss, acc, acc3 = model.eval(model.sess, data_generator, BATCH_SIZE)
+    print('[Test Set] Loss: {:.3f}, Acc: {:.2f%}, Acc3: {:.2f}, eval num: {:d}'.format(
+          loss, acc, acc3, data_generator.n // data_generator.batch_size * data_generator.batch_size))
+
 def main():
     init_tf_environ(gpu_num=1)
     all_data = prepare_data_fer2013()
@@ -247,6 +253,7 @@ def main():
     before_save(train_log_file)
     lists2csv(list(zip(train_steps, losses)), train_log_file, header=['step', 'loss'])
     lists2csv(list(zip(valid_steps, valid_losses)), valid_log_file, header=['step', 'loss'])
+    eval(model, all_data['test'])
 
 
 if __name__ == '__main__':
