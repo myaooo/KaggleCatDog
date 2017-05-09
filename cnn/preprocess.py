@@ -62,21 +62,21 @@ def generate_data(X, y, batch_size=BATCH_SIZE, train=True):
     :param train
     :return: a keras generator
     """
-    if train:
-    # if False:
-        datagen = ImageDataGenerator(
-            rotation_range=20,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
-            # shear_range=0.2,
-            zoom_range=0.2,
-            horizontal_flip=True,
-            # vertical_flip=True,
-            # samplewise_center=True,
-            fill_mode='nearest')
-            # fill_mode='constant')
-    else:
-        datagen = ImageDataGenerator()
+    # if train:
+    # # if False:
+        # datagen = ImageDataGenerator(
+            # rotation_range=20,
+            # width_shift_range=0.2,
+            # height_shift_range=0.2,
+            # # shear_range=0.2,
+            # zoom_range=0.2,
+            # horizontal_flip=True,
+            # # vertical_flip=True,
+            # # samplewise_center=True,
+            # fill_mode='nearest')
+            # # fill_mode='constant')
+    # else:
+    datagen = ImageDataGenerator()
     data_generator = datagen.flow(
         X, y,
         batch_size=batch_size, shuffle=train)
