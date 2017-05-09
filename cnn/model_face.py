@@ -59,8 +59,8 @@ def model1(name=''):
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 5e-3)
-    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[10*N//BATCH_SIZE, 15*N//BATCH_SIZE, 20*N//BATCH_SIZE], 
+    model.set_regularizer('l2', 1e-3)
+    model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[15*N//BATCH_SIZE, 25*N//BATCH_SIZE, 30*N//BATCH_SIZE], 
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', 0.9)
     # model.set_learning_rate(0.001)
@@ -72,6 +72,7 @@ def model2(name=''):
     # Network in Network
     model = ConvNet(name or 'NIN2')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
+    model.push_augment_layer(4, 4, True, True)
     model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[2, 2], activation='linear', has_bias=False) 
     model.push_batch_norm_layer(activation='relu')
     model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
@@ -97,7 +98,7 @@ def model2(name=''):
     model.push_fully_connected_layer(out_channels=NUM_LABELS, activation='linear')
 
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 5e-3)
+    model.set_regularizer('l2', 1e-3)
     model.set_learning_rate(0.001, 'piecewise_constant', boundaries=[20*N//BATCH_SIZE, 30*N//BATCH_SIZE, 40*N//BATCH_SIZE], 
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', 0.9)
@@ -108,6 +109,7 @@ def model3(name=''):
     # test resnet
     model = ConvNet(name or 'ResNet')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
+    model.push_augment_layer(4, 4, True, True)
     # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
     model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
@@ -133,9 +135,9 @@ def model3(name=''):
     model.push_flatten_layer()
     model.push_fully_connected_layer(NUM_LABELS, activation='linear', has_bias=True)
     model.set_loss('sparse_softmax')
-    model.set_regularizer('l2', 2e-3)
+    model.set_regularizer('l2', 1e-3)
     model.set_learning_rate(0.01, 'piecewise_constant',
-                            boundaries=[10 * N // BATCH_SIZE, 15 * N // BATCH_SIZE, 20 * N // BATCH_SIZE],
+                            boundaries=[20 * N // BATCH_SIZE, 30 * N // BATCH_SIZE, 40 * N // BATCH_SIZE],
                             values=[0.1, 0.01, 0.001, 0.0001])
     model.set_optimizer('Momentum', momentum=0.9)
     # model.set_learning_rate(0.1)  # 0.001 for RMSProp
