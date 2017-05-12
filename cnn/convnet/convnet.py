@@ -912,12 +912,14 @@ class ConvNet(SequentialNet, Classifier):
                     step_time = time.time()
 
                 if (step + 1) % batch_per_epoch == 0:
-                    print("average training loss: {:.4f}".format(epoch_loss / batch_per_epoch))
+                    print('{:-^30}'.format('Epoch {:d} Summary'.format(cur_epoch)))
+                    print("[Train] Time: {:.1f}s, Avg Loss: {:.4f}".format(time.time() - epoch_time, epoch_loss / batch_per_epoch))
+                    epoch_time = time.time()
                     loss, acc, acc3 = self.eval(sess, self.test_data_generator, batch_size)
                     valid_losses.append(loss)
-                    print('Time: {:.2f}s, Loss: {:.3f}, Acc: {:.2f}%, Acc3: {:.2f}%, eval num: {:d}'.format(
+                    print('[Valid] Time: {:.1f}s, Loss: {:.3f}, Acc: {:.2f}%, Acc3: {:.2f}%, eval num: {:d}'.format(
                           time.time() - epoch_time, loss, acc*100, acc3*100, eval_size))
-                    print('{:*^30}'.format('Epoch {:>2} Done'.format(cur_epoch)))
+                    print('{:-^30}'.format('Epoch {:d} Done'.format(cur_epoch)))
                     epoch_loss = 0
                     epoch_time = time.time()
 
