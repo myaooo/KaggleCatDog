@@ -149,9 +149,9 @@ def model4(name=''):
     # test resnet
     model = ConvNet(name or 'ResBN')
     model.push_input_layer(dshape=[None, IMG_SIZE[0], IMG_SIZE[1], CHANNELS])
-    model.push_augment_layer(4, 4, True, True)
+    model.push_augment_layer(5, 5, True, True)
     # model.push_conv_layer(filter_size=[7, 7], out_channels=64, strides=[1, 1], activation='linear', has_bias=False)
-    model.push_conv_layer(filter_size=[3, 3], out_channels=16, strides=[1, 1], activation='linear', has_bias=False)
+    model.push_conv_layer(filter_size=[3, 3], out_channels=32, strides=[1, 1], activation='linear', has_bias=False)
     model.push_batch_norm_layer(activation='relu')
     # model.push_pool_layer('max', [2, 2], strides=[2, 2])
     model.push_res_bn_layer([3, 3], 64, strides=[1, 1], activation='relu', activate_before_residual=False)
